@@ -1,0 +1,42 @@
+language: python
+
+services:
+  - postgresql
+  - redis
+
+# use an older trusty image, because the newer images cause build errors with
+# psycopg2 that comes with CKAN<2.8:
+#   "Error: could not determine PostgreSQL version from '10.1'"
+# see https://github.com/travis-ci/travis-ci/issues/8897
+dist: trusty
+group: deprecated-2017Q4
+
+python:
+  - 2.7
+  - 3.6
+
+env:
+  - CKANVERSION=master
+  - CKANVERSION=2.8
+
+install:
+  - bash bin/travis-build.bash
+  - pip install coveralls
+
+script: make test coverage CKAN_PATH=./ckan
+
+after_success:
+  - coveralls
+
+jobs:
+  exclude:
+    - python: 3.6
+      env: CKANVERSION=2.8
+
+  allow_failures:
+    - python: 3.6
+    - env: CKANVERSION=master
+
+cache:
+  directories:
+    - $HOME/.cache/pip
