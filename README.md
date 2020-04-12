@@ -3,24 +3,32 @@ ckanext-external-storage
 [![Build Status](https://travis-ci.org/datopian/ckanext-external-storage.svg?branch=master)](https://travis-ci.org/datopian/ckanext-external-storage)
 [![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-external-storage/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-external-storage?branch=master)
 
-**External Storage for CKAN Resources**
+**Move CKAN resource storage management to an external micro-service**
 
-`ckanext-external-storage` replace's CKAN's data storage with an external
-Git LFS based storage service. 
+`ckanext-external-storage` replace's CKAN's data storage functionality 
+with an external micro-service deployed separately of CKAN. This stand-alone
+micro-service is responsible for authorizing access to storage backends,
+which could in turn be local, cloud based (e.g. S3, Azure Blobs, GCP, etc.)
+or any other storage. In addition, the service allows clients (typically
+browsers) to upload and download files directly to storage without passing
+them through CKAN, which can greatly improve file access efficiency.
 
-In effect, this offloads the responsibility of managing data storage from 
-CKAN's core to an external micro-service. In turn, the Git LFS server could
-be configured to use different types of storage as a backend, including 
-cloud-based storage (AWS S3, Azure Blobs, Google Cloud Files etc.), local 
-storage, or any other type of backend.
+Authentication and authorization to the external storage management service
+is done via JWT tokens provided by 
+[`ckanext-authz-service`](https://github.com/datopian/ckanext-authz-service).
+
+Internally, the external storage management service is in fact a Git LFS server
+implementation, which means access via 3rd party Git based tools is also 
+potentially possible. 
 
 Requirements
 ------------
-
-This extension works with CKAN 2.8.x. 
-
-It may work, but has not been tested, with other CKAN versions. 
-
+* This extension works with CKAN 2.8.x. It may work, but has not been tested, 
+with other CKAN versions.
+* `ckanext-authz-service` must be installed and enabled
+* A working and configured Git LFS server accessible to the browser. We 
+recommend usign [Giftless](https://github.com/datopian/giftless) but other 
+implementations may be configured to work as well.
 
 Installation
 ------------
@@ -48,7 +56,12 @@ To install ckanext-external-storage:
 
 Configuration settings
 ----------------------
-TBD
+
+`ckanext.external_storage.storage_service_url = 'https://...'`
+
+Set the URL of the external storage microservice (the Git LFS server). This
+must be a URL accessible to browsers connecting to the service. 
+
 
 Developer installation
 ----------------------
