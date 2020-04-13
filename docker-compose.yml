@@ -1,0 +1,40 @@
+# Docker Compose file for ckanext-external-storage
+# ------------------------------------------------
+# The purpose of this docker-compose file is to simplify setting up a
+# development environment for this CKAN extension; It defines Docker based
+# services for all external CKAN dependencies (DB, Solr, Redis) but not for
+# CKAN itself - you should probably run CKAN in a local virtual environment
+# to simplify debugging.
+#
+# Most likely, you do not want to use this file directly with `docker-compose`
+# but use the provided Make targets to manage things.
+
+version: "3"
+
+volumes:
+  db_data:
+
+services:
+
+  db:
+    image: postgres:9-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  solr:
+    image: ckan/solr
+    environment:
+      - CKAN_SOLR_PASSWORD=${CKAN_SOLR_PASSWORD}
+    ports:
+      - 8983:8983
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379

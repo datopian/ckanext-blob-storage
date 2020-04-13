@@ -49,3 +49,7 @@ docs/_build/
 
 # Make sentinel files
 /.make-status/
+
+# Development environment extras
+/ckan
+/.env

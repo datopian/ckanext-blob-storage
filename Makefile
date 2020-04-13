@@ -11,6 +11,8 @@ ISORT := isort
 FLAKE8 := flake8
 NOSETESTS := nosetests
 PASTER := paster
+DOCKER_COMPOSE := docker-compose
+GIT := git
 
 # Find GNU sed in path (on OS X gsed should be preferred)
 SED := $(shell which gsed sed | head -n1)
@@ -21,6 +23,20 @@ SENTINELS := .make-status
 
 PYTHON_VERSION := $(shell $(PYTHON) -c 'import sys; print(sys.version_info[0])')
 
+# CKAN environment variables
+CKAN_REPO_URL := https://github.com/ckan/ckan.git
+CKAN_VERSION := ckan-2.8.3
+CKAN_CONFIG_FILE := ckan/development.ini
+CKAN_SITE_URL := http://localhost:5000
+POSTGRES_USER := ckan
+POSTGRES_PASSWORD := ckan
+POSTGRES_DB := ckan
+CKAN_SOLR_PASSWORD := ckan
+DATASTORE_DB_NAME := datastore
+DATASTORE_DB_RO_USER := datastore_ro
+DATASTORE_DB_RO_PASSWORD := datastore_ro
+CKAN_LOAD_PLUGINS := external_storage authz_service stats text_view image_view recline_view datastore
+
 
 dev-requirements.%.txt: dev-requirements.in
 	$(PIP_COMPILE) --no-index dev-requirements.in -o $@
@@ -28,8 +44,121 @@ dev-requirements.%.txt: dev-requirements.in
 requirements.%.txt: requirements.in
 	$(PIP_COMPILE) --no-index requirements.in -o $@
 
+.coverage: $(SENTINELS)/tests-passed $(shell find $(PACKAGE_DIR) -type f) .coveragerc
+	$(NOSETESTS) --ckan \
+	      --with-pylons=$(TEST_INI_PATH) \
+          --nologcapture \
+		  --with-coverage \
+          --cover-package=$(PACKAGE_NAME) \
+          --cover-inclusive \
+          --cover-erase \
+          --cover-tests
+
+## Install this extension to the current Python environment
+install: $(SENTINELS)/install
+.PHONY: install
+
+## Update requirements files for the current Python version
+requirements: $(SENTINELS)/requirements
+.PHONEY: requirements
+
+## Set up the extension for development
+develop: $(SENTINELS)/develop
+.PHONEY: develop
+
+## Run all tests
+test: $(SENTINELS)/tests-passed
+.PHONY: test
+
+## Run test coverage report
+coverage: .coverage
+.PHONY: coverage
+
+ckan:
+	$(GIT) clone $(CKAN_REPO_URL)
+
+$(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed | _check_virtualenv
+	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
+	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) \
+		debug=true \
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
+		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
+		ckan.storage_path='%(here)s/storage' \
+		solr_url=http://127.0.0.1:8983/solr/ckan
+
+## Install the right version of CKAN into the virtual environment
+ckan-install: $(SENTINELS)/ckan-installed
+	@echo "Current CKAN version: $(shell cat ckan/.version)"
+.PHONY: ckan-install
+
+## Run CKAN in the local virtual environment
+ckan-start: export CKAN_SITE_URL := $(CKAN_SITE_URL)
+ckan-start: ckan-install $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_virtualenv
+	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
+	$(PASTER) --plugin=ckan serve --reload $(CKAN_CONFIG_FILE)
+.PHONY: ckan-start
+
+.env:
+	@___POSTGRES_USER=$(POSTGRES_USER) \
+	___POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+	___POSTGRES_DB=$(POSTGRES_DB) \
+	___CKAN_SOLR_PASSWORD=$(CKAN_SOLR_PASSWORD) \
+	___DATASTORE_DB_NAME=$(DATASTORE_DB_NAME) \
+	___DATASTORE_DB_USER=$(POSTGRES_USER) \
+	___DATASTORE_DB_RO_USER=$(DATASTORE_DB_RO_USER) \
+	___DATASTORE_DB_RO_PASSWORD=$(DATASTORE_DB_RO_PASSWORD) \
+	env | grep ^___ | $(SED) 's/^___//' > .env
+	@cat .env
+
+## Start all Docker services
+docker-up: .env
+	$(DOCKER_COMPOSE) up -d
+	$(DOCKER_COMPOSE) exec db pg_isready -U $(POSTGRES_USER) -t 60
+	@echo " \
+    	CREATE ROLE $(DATASTORE_DB_RO_USER) NOSUPERUSER NOCREATEDB NOCREATEROLE LOGIN PASSWORD '$(DATASTORE_DB_RO_PASSWORD)'; \
+    	CREATE DATABASE $(DATASTORE_DB_NAME) OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
+    	GRANT ALL PRIVILEGES ON DATABASE $(DATASTORE_DB_NAME) TO $(POSTGRES_USER);  \
+    " | $(DOCKER_COMPOSE) exec -T db psql --username "$(POSTGRES_USER)"
+.PHONY: docker-up
+
+## Stop all Docker services
+docker-down: .env
+	$(DOCKER_COMPOSE) down
+.PHONY: docker-down
+
+## Initialize the development environment
+setup: _check_virtualenv ckan-install ckan/who.ini ckan/development.ini
+.PHONY: setup
+
+# Private targets
+
+_check_virtualenv:
+	@if [ -z "$(VIRTUAL_ENV)" ]; then \
+	  echo "You are not in a virtual environment - activate your virtual environment first"; \
+	  exit 1; \
+	fi
+.PHONY: _check_virtualenv
+
 $(SENTINELS):
 	mkdir -p $@
+
+$(SENTINELS)/ckan-version: ckan | _check_virtualenv $(SENTINELS)
+	$(GIT) -C ckan remote update
+	$(GIT) -C ckan checkout $(CKAN_VERSION)
+	$(PIP) install -r ckan/requirements.txt
+	$(PIP) install -r ckan/dev-requirements.txt
+	$(PIP) install -e ckan
+	echo "$(CKAN_VERSION)" > $@
+
+$(SENTINELS)/ckan-installed: ckan/.version | $(SENTINELS)
+	@if [ "$(shell cat $(SENTINELS)/ckan-version)" != "$(CKAN_VERSION)" ]; then \
+	  echo "Switching to CKAN $(CKAN_VERSION)"; \
+	  rm $(SENTINELS)/ckan-version; \
+	  $(MAKE) $(SENTINELS)/ckan-version; \
+	fi
+	@touch $@
 
 $(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
@@ -42,9 +171,12 @@ $(SENTINELS)/install: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 	$(PIP) install -r requirements.py$(PYTHON_VERSION).txt
 	@touch $@
 
-$(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/test.ini setup.py | $(SENTINELS)
+$(SENTINELS)/install-dev: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 	$(PIP) install -r dev-requirements.py$(PYTHON_VERSION).txt
 	$(PIP) install -e .
+	@touch $@
+
+$(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/install-dev $(SENTINELS)/test.ini setup.py | $(SENTINELS)
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
 	@touch $@
 
@@ -57,27 +189,27 @@ $(SENTINELS)/tests-passed: $(SENTINELS)/develop $(shell find $(PACKAGE_DIR) -typ
           --with-doctest
 	@touch $@
 
-.coverage: $(SENTINELS)/tests-passed $(shell find $(PACKAGE_DIR) -type f) .coveragerc
-	$(NOSETESTS) --ckan \
-	      --with-pylons=$(TEST_INI_PATH) \
-          --nologcapture \
-		  --with-coverage \
-          --cover-package=$(PACKAGE_NAME) \
-          --cover-inclusive \
-          --cover-erase \
-          --cover-tests
+# Help related variables and targets
 
-install: $(SENTINELS)/install
-.PHONY: install
+GREEN  := $(shell tput -Txterm setaf 2)
+YELLOW := $(shell tput -Txterm setaf 3)
+WHITE  := $(shell tput -Txterm setaf 7)
+RESET  := $(shell tput -Txterm sgr0)
+TARGET_MAX_CHAR_NUM := 15
 
-requirements: $(SENTINELS)/requirements
-.PHONEY: requirements
-
-develop: $(SENTINELS)/develop
-.PHONEY: develop
-
-test: $(SENTINELS)/tests-passed
-.PHONY: test
-
-coverage: .coverage
-.PHONY: coverage
+## Show help
+help:
+	@echo ''
+	@echo 'Usage:'
+	@echo '  ${YELLOW}make${RESET} ${GREEN}<target>${RESET}'
+	@echo ''
+	@echo 'Targets:'
+	@awk '/^[a-zA-Z\-\_0-9]+:/ { \
+	  helpMessage = match(lastLine, /^## (.*)/); \
+	  if (helpMessage) { \
+	    helpCommand = substr($$1, 0, index($$1, ":")-1); \
+	    helpMessage = substr(lastLine, RSTART + 3, RLENGTH); \
+	    printf "  ${YELLOW}%-$(TARGET_MAX_CHAR_NUM)s${RESET} ${GREEN}%s${RESET}\n", helpCommand, helpMessage; \
+	  } \
+	} \
+	{ lastLine = $$0 }' $(MAKEFILE_LIST)
