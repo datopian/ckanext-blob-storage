@@ -90,7 +90,7 @@ $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed | _check_virtualenv
 
 ## Install the right version of CKAN into the virtual environment
 ckan-install: $(SENTINELS)/ckan-installed
-	@echo "Current CKAN version: $(shell cat ckan/.version)"
+	@echo "Current CKAN version: $(shell cat $(SENTINELS)/ckan-version)"
 .PHONY: ckan-install
 
 ## Run CKAN in the local virtual environment
