@@ -81,6 +81,7 @@ $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_v
 	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) \
 		debug=true \
+		ckan.site_url=$(CKAN_SITE_URL) \
 		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
 		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
 		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
@@ -94,7 +95,6 @@ ckan-install: $(SENTINELS)/ckan-installed
 .PHONY: ckan-install
 
 ## Run CKAN in the local virtual environment
-ckan-start: export CKAN_SITE_URL := $(CKAN_SITE_URL)
 ckan-start: $(SENTINELS)/ckan-installed $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_virtualenv
 	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan serve --reload $(CKAN_CONFIG_FILE)
