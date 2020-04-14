@@ -77,7 +77,7 @@ coverage: .coverage
 $(CKAN_PATH):
 	$(GIT) clone $(CKAN_REPO_URL) $@
 
-$(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed | _check_virtualenv
+$(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
 	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) \
 		debug=true \
@@ -95,7 +95,7 @@ ckan-install: $(SENTINELS)/ckan-installed
 
 ## Run CKAN in the local virtual environment
 ckan-start: export CKAN_SITE_URL := $(CKAN_SITE_URL)
-ckan-start: ckan-install $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_virtualenv
+ckan-start: $(SENTINELS)/ckan-installed $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_virtualenv
 	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan serve --reload $(CKAN_CONFIG_FILE)
 .PHONY: ckan-start
@@ -130,7 +130,7 @@ docker-down: .env
 .PHONY: docker-down
 
 ## Initialize the development environment
-dev-setup: _check_virtualenv ckan-install $(CKAN_PATH)/who.ini $(CKAN_CONFIG_FILE) develop
+dev-setup: _check_virtualenv $(SENTINELS)/ckan-installed $(CKAN_PATH)/who.ini $(CKAN_CONFIG_FILE) $(SENTINELS)/develop
 .PHONY: setup
 
 ## Start a full development environment
