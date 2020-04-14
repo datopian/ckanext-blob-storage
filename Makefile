@@ -18,15 +18,15 @@ GIT := git
 SED := $(shell which gsed sed | head -n1)
 
 TEST_INI_PATH := ./test.ini
-CKAN_PATH := ../ckan
 SENTINELS := .make-status
 
 PYTHON_VERSION := $(shell $(PYTHON) -c 'import sys; print(sys.version_info[0])')
 
 # CKAN environment variables
+CKAN_PATH := ckan
 CKAN_REPO_URL := https://github.com/ckan/ckan.git
 CKAN_VERSION := ckan-2.8.3
-CKAN_CONFIG_FILE := ckan/development.ini
+CKAN_CONFIG_FILE := $(CKAN_PATH)/development.ini
 CKAN_SITE_URL := http://localhost:5000
 POSTGRES_USER := ckan
 POSTGRES_PASSWORD := ckan
@@ -74,8 +74,8 @@ test: $(SENTINELS)/tests-passed
 coverage: .coverage
 .PHONY: coverage
 
-ckan:
-	$(GIT) clone $(CKAN_REPO_URL)
+$(CKAN_PATH):
+	$(GIT) clone $(CKAN_REPO_URL) $@
 
 $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed | _check_virtualenv
 	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
@@ -130,7 +130,7 @@ docker-down: .env
 .PHONY: docker-down
 
 ## Initialize the development environment
-dev-setup: _check_virtualenv ckan-install ckan/who.ini ckan/development.ini develop
+dev-setup: _check_virtualenv ckan-install $(CKAN_PATH)/who.ini $(CKAN_CONFIG_FILE) develop
 .PHONY: setup
 
 ## Start a full development environment
@@ -149,12 +149,12 @@ _check_virtualenv:
 $(SENTINELS):
 	mkdir -p $@
 
-$(SENTINELS)/ckan-version: ckan | _check_virtualenv $(SENTINELS)
-	$(GIT) -C ckan remote update
-	$(GIT) -C ckan checkout $(CKAN_VERSION)
-	$(PIP) install -r ckan/requirements.txt
-	$(PIP) install -r ckan/dev-requirements.txt
-	$(PIP) install -e ckan
+$(SENTINELS)/ckan-version: $(CKAN_PATH) | _check_virtualenv $(SENTINELS)
+	$(GIT) -C $(CKAN_PATH) remote update
+	$(GIT) -C $(CKAN_PATH) checkout $(CKAN_VERSION)
+	$(PIP) install -r $(CKAN_PATH)/requirements.txt
+	$(PIP) install -r $(CKAN_PATH)/dev-requirements.txt
+	$(PIP) install -e $(CKAN_PATH)
 	echo "$(CKAN_VERSION)" > $@
 
 $(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
@@ -165,7 +165,7 @@ $(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
 	fi
 	@touch $@
 
-$(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
+$(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
 	@touch $@
 
