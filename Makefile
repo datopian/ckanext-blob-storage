@@ -54,15 +54,15 @@ requirements.%.txt: requirements.in
           --cover-erase \
           --cover-tests
 
-## Install this extension to the current Python environment
-install: $(SENTINELS)/install
-.PHONY: install
-
 ## Update requirements files for the current Python version
 requirements: $(SENTINELS)/requirements
 .PHONEY: requirements
 
-## Set up the extension for development
+## Install this extension to the current Python environment
+install: $(SENTINELS)/install
+.PHONY: install
+
+## Set up the extension for development in the current Python environment
 develop: $(SENTINELS)/develop
 .PHONEY: develop
 
@@ -115,7 +115,8 @@ ckan-start: ckan-install $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_v
 ## Start all Docker services
 docker-up: .env
 	$(DOCKER_COMPOSE) up -d
-	$(DOCKER_COMPOSE) exec db pg_isready -U $(POSTGRES_USER) -t 60
+	@until $(DOCKER_COMPOSE) exec db pg_isready -U $(POSTGRES_USER); do sleep 1; done
+	@sleep 2
 	@echo " \
     	CREATE ROLE $(DATASTORE_DB_RO_USER) NOSUPERUSER NOCREATEDB NOCREATEROLE LOGIN PASSWORD '$(DATASTORE_DB_RO_PASSWORD)'; \
     	CREATE DATABASE $(DATASTORE_DB_NAME) OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
@@ -129,8 +130,12 @@ docker-down: .env
 .PHONY: docker-down
 
 ## Initialize the development environment
-setup: _check_virtualenv ckan-install ckan/who.ini ckan/development.ini
+dev-setup: _check_virtualenv ckan-install ckan/who.ini ckan/development.ini develop
 .PHONY: setup
+
+## Start a full development environment
+dev-start: dev-setup docker-up ckan-start
+.PHONY: start-dev
 
 # Private targets
 
@@ -177,10 +182,13 @@ $(SENTINELS)/install-dev: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 	@touch $@
 
 $(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/install-dev $(SENTINELS)/test.ini setup.py | $(SENTINELS)
+	@touch $@
+
+$(SENTINELS)/dev-setup: $(SENTINELS)/develop
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
 	@touch $@
 
-$(SENTINELS)/tests-passed: $(SENTINELS)/develop $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
+$(SENTINELS)/tests-passed: $(SENTINELS)/dev-setup $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
 	$(ISORT) -rc -df -c $(PACKAGE_DIR)
 	$(FLAKE8) --statistics $(PACKAGE_DIR)
 	$(NOSETESTS) --ckan \
