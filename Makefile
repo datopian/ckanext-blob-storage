@@ -157,7 +157,7 @@ $(SENTINELS)/ckan-version: ckan | _check_virtualenv $(SENTINELS)
 	$(PIP) install -e ckan
 	echo "$(CKAN_VERSION)" > $@
 
-$(SENTINELS)/ckan-installed: ckan/.version | $(SENTINELS)
+$(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
 	@if [ "$(shell cat $(SENTINELS)/ckan-version)" != "$(CKAN_VERSION)" ]; then \
 	  echo "Switching to CKAN $(CKAN_VERSION)"; \
 	  rm $(SENTINELS)/ckan-version; \
