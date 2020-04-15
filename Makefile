@@ -87,7 +87,8 @@ $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_v
 		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
 		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
 		ckan.storage_path='%(here)s/storage' \
-		solr_url=http://127.0.0.1:8983/solr/ckan
+		solr_url=http://127.0.0.1:8983/solr/ckan \
+		ckanext.external_storage.storage_service_url=http://localhost:9419
 
 ## Install the right version of CKAN into the virtual environment
 ckan-install: $(SENTINELS)/ckan-installed
