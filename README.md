@@ -66,15 +66,34 @@ must be a URL accessible to browsers connecting to the service.
 Developer installation
 ----------------------
 
-To install ckanext-external-storage for development, activate your CKAN virtualenv and
-do:
+To install `ckanext-external-storage` for development, do the following:
+
+* Pull the project code from Github:
+
 
     git clone https://github.com/datopian/ckanext-external-storage.git
     cd ckanext-external-storage
-    make develop
+    
+* Create a Python 2.7 virtual environment:
 
-The `make develop` command will take care of installing dependencies for the 
-current Python version. 
+
+    virtualenv .venv27
+    source .venv27/bin/activate
+    
+* Run the following command to bootstrap the entire environment:
+
+
+    make dev-start
+    
+This will pull and install CKAN and all it's dependencies into your virtual
+environment, create all necessary configuration files, launch external services
+using Docker Compose and start the CKAN development server.
+
+You can repeat the last command at any time to start developing again. 
+
+Type `make help` to get a like of user commands useful to managing the local
+environment. 
+
 
 ### Working with `requirements.txt` files
 
