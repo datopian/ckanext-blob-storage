@@ -1,0 +1,5 @@
+{% ckan_extends %}
+
+{% block form %}
+  {% snippet 'external_storage/snippets/upload_module.html', pkg_name=pkg_name, parent=super %}
+{% endblock %}

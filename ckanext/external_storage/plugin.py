@@ -6,6 +6,7 @@ from ckanext.authz_service.interfaces import IAuthorizationBindings
 
 class ExternalStoragePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
+    plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(IAuthorizationBindings)
 
     # IConfigurer
@@ -13,7 +14,12 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
     def update_config(self, config):
         toolkit.add_template_directory(config, 'templates')
         toolkit.add_public_directory(config, 'public')
-        toolkit.add_resource('fanstatic', 'external_storage')
+        toolkit.add_resource('fanstatic', 'external-storage')
+
+    # ITemplateHelpers
+
+    def get_helpers(self):
+        return {}
 
     # IAuthorizationBindings
 

@@ -1,0 +1,7 @@
+{% resource 'external-storage/js/upload.js' %}
+
+<div data-module="external-storage-upload"
+     data-module-server-url="http://127.0.0.1:9414"
+     data-module-package-id="{{ pkg_name }}">
+    {{ parent() }}
+</div>
