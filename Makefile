@@ -88,7 +88,11 @@ $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_v
 		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
 		ckan.storage_path='%(here)s/storage' \
 		solr_url=http://127.0.0.1:8983/solr/ckan \
-		ckanext.external_storage.storage_service_url=http://localhost:9419
+		ckanext.external_storage.storage_service_url=http://localhost:9419 \
+		ckanext.authz_service.jwt_algorithm=HS256 \
+		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
+		ckanext.authz_service.jwt_include_user_email=true
+
 
 ## Install the right version of CKAN into the virtual environment
 ckan-install: $(SENTINELS)/ckan-installed

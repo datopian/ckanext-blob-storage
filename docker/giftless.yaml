@@ -1,3 +1,16 @@
 # Giftless configuration file for local development purposes
 ---
-{}
+# JWT based authentication and authorization from CKAN
+AUTH_PROVIDERS:
+  - factory: giftless.auth.jwt:factory
+    options:
+      algorithm: HS256
+      private_key: this-is-a-test-only-key
+
+# In a local environment we'll use the default storage adapter
+TRANSFER_ADAPTERS: {}
+
+# Set private key for internal pre-signed requests (e.g. requests to verify)
+PRE_AUTHORIZED_ACTION_PROVIDER:
+  options:
+    private_key: another-test-only-key
