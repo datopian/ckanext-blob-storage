@@ -18,40 +18,41 @@ ckan.module('external-storage-upload', function($) {
             this._form = this.$('form');
             this._save = $('[name=save]');
             this._id = $('input[name=id]');
-            this._file = $('#field-image-upload');
+            this._file = null;
+
+            var self = this;
+            $('#field-image-upload').on('change', function(event) {
+                if (! window.FileList) {
+                    return;
+                }
+                self._file = event.target.files[0];
+            });
 
             this._save.on('click', this._onFormSubmit);
         },
 
         _onFormSubmit: function(event) {
             // Check if we have anything to upload
-            if (! window.FileList || ! this._file || ! this._file.val()) {
+            if (! this._file) {
                 return;
             }
 
             event.preventDefault();
+
+            var file = new ckanUploader.FileAPI.HTML5File(this._file);
+
             var prefix = this.options.storagePrefix.split('/');
             var scopes = [this.options.authzScope];
             var serverUrl = this.options.serverUrl;
 
             this._getAuthzToken(scopes).then(function(token) {
                 console.log(token);
-
-                const test = new ckanUploader.DataHub(
-                    token,
-                    prefix[0],
-                    prefix[1],
-                    serverUrl
-                );
-
-                const resources = {
-                  basePath: 'test/fixtures',
-                  path: 'sample.csv',
-                };
-
-                return test.push(resources);
-            }).then(function(result) {
-                console.log(result);
+                const uploader = new ckanUploader.DataHub(token, prefix[0], prefix[1], serverUrl);
+                return uploader.push(file, token);
+            }).then(function() {
+                // Add the oid and size (file.sha256() and file.size()) to form data
+                // Submit the form to update / create the resource
+                // 
             });
         },
 

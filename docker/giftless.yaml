@@ -10,6 +10,7 @@ AUTH_PROVIDERS:
 # In a local environment we'll use the default storage adapter
 TRANSFER_ADAPTERS: {}
 
+
 # Set private key for internal pre-signed requests (e.g. requests to verify)
 PRE_AUTHORIZED_ACTION_PROVIDER:
   options:
