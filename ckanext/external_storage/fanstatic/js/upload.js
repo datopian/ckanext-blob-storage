@@ -45,15 +45,20 @@ ckan.module('external-storage-upload', function($) {
             var scopes = [this.options.authzScope];
             var serverUrl = this.options.serverUrl;
 
-            this._getAuthzToken(scopes).then(function(token) {
-                console.log(token);
-                const uploader = new ckanUploader.DataHub(token, prefix[0], prefix[1], serverUrl);
-                return uploader.push(file, token);
-            }).then(function() {
-                // Add the oid and size (file.sha256() and file.size()) to form data
-                // Submit the form to update / create the resource
-                // 
-            });
+            this._getAuthzToken(scopes)
+                .then(function(token) {     
+                    console.log(token);           
+                    const uploader = new ckanUploader.DataHub(token, prefix[0], prefix[1], serverUrl);
+                    return uploader.push(file, token)
+                }).then(function(response) {
+                    // Add the oid and size (file.sha256() and file.size()) to form data
+                    // Submit the form to update / create the resource
+
+                    var data = new FormData();
+                    data.append("oid", response.objects[0].oid);
+                    data.append("size", response.objects[0].size);
+                    console.log(...data)
+                });
         },
 
         _getAuthzToken: function (scopes) {
