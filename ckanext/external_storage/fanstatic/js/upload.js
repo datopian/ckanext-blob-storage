@@ -47,17 +47,26 @@ ckan.module('external-storage-upload', function($) {
 
             this._getAuthzToken(scopes)
                 .then(function(token) {     
-                    console.log(token);           
                     const uploader = new ckanUploader.DataHub(token, prefix[0], prefix[1], serverUrl);
-                    return uploader.push(file, token)
+                    const pushResponse = uploader.push(file, token)
+                    return pushResponse
                 }).then(function(response) {
+
+                    if (response.verifyAction.error || response.cloudStorage.error) {
+                       return response.verifyAction.error ? alert(response.verifyAction.message) : alert(response.cloudStorage.message)
+                    }
+                    
                     // Add the oid and size (file.sha256() and file.size()) to form data
                     // Submit the form to update / create the resource
-
                     var data = new FormData();
-                    data.append("oid", response.objects[0].oid);
-                    data.append("size", response.objects[0].size);
-                    console.log(...data)
+                    data.append("oid", response.lfs.objects[0].oid);
+                    data.append("size", response.lfs.objects[0].size);
+                    
+                    console.log("FormData: ", ...data)
+                    console.log("")
+                    console.log("====================")
+                    console.log("")
+                    console.log("Response: ", response)
                 });
         },
 
