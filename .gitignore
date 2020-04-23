@@ -1,8 +1,8 @@
 .ropeproject
 bower_components
-node_modules
 .vscode/
 package-lock.json
+node_modules
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

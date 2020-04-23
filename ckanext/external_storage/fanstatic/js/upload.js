@@ -47,15 +47,15 @@ ckan.module('external-storage-upload', function($) {
 
             this._getAuthzToken(scopes)
                 .then(function(token) {     
-                    const uploader = new ckanUploader.DataHub(token, prefix[0], prefix[1], serverUrl);
-                    const pushResponse = uploader.push(file, token)
-                    return pushResponse
+                    var uploader = new ckanUploader.DataHub(token, prefix[0], prefix[1], serverUrl);
+                    var pushResponse = uploader.push(file, token);
+                    return pushResponse;
                 }).then(function(response) {
 
-                    if (response.verifyAction.error || response.cloudStorage.error) {
-                       return response.verifyAction.error ? alert(response.verifyAction.message) : alert(response.cloudStorage.message)
-                    }
-                    
+                    // if (response.verifyAction.error || response.cloudStorage.error) {
+                    //    return response.verifyAction.error ? alert(response.verifyAction.message) : alert(response.cloudStorage.message)
+                    // }
+
                     // Add the oid and size (file.sha256() and file.size()) to form data
                     // Submit the form to update / create the resource
                     var data = new FormData();
@@ -67,6 +67,8 @@ ckan.module('external-storage-upload', function($) {
                     console.log("====================")
                     console.log("")
                     console.log("Response: ", response)
+                }).catch(function(error) { 
+                    alert(error);
                 });
         },
 
