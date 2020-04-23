@@ -44,6 +44,11 @@ ckan.module('external-storage-upload', function($) {
             var prefix = this.options.storagePrefix.split('/');
             var scopes = [this.options.authzScope];
             var serverUrl = this.options.serverUrl;
+            var formData = this._form.serializeArray().reduce(
+                function (result, item) {
+                    result[item.name] = item.value;
+                    return result;
+            }, {});
 
             this._getAuthzToken(scopes)
                 .then(function(token) {     
@@ -52,21 +57,25 @@ ckan.module('external-storage-upload', function($) {
                     return pushResponse;
                 }).then(function(response) {
 
+                    // TODO: Throw error in the SDK
                     // if (response.verifyAction.error || response.cloudStorage.error) {
                     //    return response.verifyAction.error ? alert(response.verifyAction.message) : alert(response.cloudStorage.message)
                     // }
 
                     // Add the oid and size (file.sha256() and file.size()) to form data
                     // Submit the form to update / create the resource
-                    var data = new FormData();
-                    data.append("oid", response.lfs.objects[0].oid);
-                    data.append("size", response.lfs.objects[0].size);
-                    
-                    console.log("FormData: ", ...data)
+                    formData.multipart_name = file.file.name;
+                    formData.url = file.file.name;
+                    formData.size = file.file.size;
+                    formData.url_type = 'upload';
+                    formData._sha256 = file._sha256;
+                    var action = formData.id ? 'resource_update' : 'resource_create';
+                    console.log("FormData: ", formData)
                     console.log("")
-                    console.log("====================")
                     console.log("")
                     console.log("Response: ", response)
+                    console.log("File: ", file)
+                    console.log("Action: ", action)
                 }).catch(function(error) { 
                     alert(error);
                 });
