@@ -17,11 +17,20 @@ ckan.module("external-storage-upload", function ($) {
     initialize: function () {
       console.log("Initializing external-storage-upload CKAN JS module");
       $.proxyAll(this, /^_/);
-      // this._url = $('#field-image-url');
+      this._url = $('#field-image-url');
       this._form = this.$("form");
       this._save = $("[name=save]");
       this._id = $("input[name=id]");
       this._file = null;
+      this._progress = $('<div>', {
+        class: 'form-group controls progress progress-striped active',
+        style: 'display: none'
+      });
+      this._bar = $('<div>', {
+        class: 'progress-bar bar',
+        style: 'min-width:2em'}).text('0%');
+      this._progress.append(this._bar);
+      this._progress.insertAfter(this._url.parent().parent());
 
       var self = this;
 
@@ -42,7 +51,7 @@ ckan.module("external-storage-upload", function ($) {
       }
 
       event.preventDefault();
-
+    ;
       this._clickedBtn = $(event.target).attr('value');
 
       if (this._clickedBtn == 'go-dataset') {
@@ -75,7 +84,7 @@ ckan.module("external-storage-upload", function ($) {
 
           if (resourceData.package_id && resourceData.id){
             self.sandbox.notify('Success', self.i18n('resource_updated'), 'success');
-            
+            self._setProgressType('success', self._progress);
             if (self._clickedBtn == 'again') {
               return self.sandbox.url('/dataset/new_resource/' + resourceData.package_id);
             } else {
@@ -173,9 +182,26 @@ ckan.module("external-storage-upload", function ($) {
         var file = new ckanUploader.FileAPI.HTML5File(this._file);
 
         var uploader = new ckanUploader.DataHub(authToken, prefix[0], prefix[1], serverUrl);
-        return uploader.push(file, authToken, function(progressEvent) {
-          console.log("Progress: " + (progressEvent.loaded / progressEvent.total) * 100 + '%');
-        });
+        this._setProgressType('info', this._progress);
+        this._progress.show('slow')
+        return uploader.push(file, authToken, this._onProgress);
+    },
+
+    _onProgress: function(progressEvent) {
+      var progress = + (progressEvent.loaded / progressEvent.total) * 100;
+      this._setProgress(progress, this._bar);
+      console.log(Math.round(progress, 2) + "%")
+    },
+
+    _setProgress: function (progress, bar) {
+      bar.css('width', progress + '%');
+      bar.text(Math.round(progress) + '%');
+    },
+
+    _setProgressType: function (type, progress) {
+      progress
+          .removeClass('progress-success progress-danger progress-info')
+          .addClass('progress-' + type);
     },
 
     _generateAuthToken: function (scopes) {
