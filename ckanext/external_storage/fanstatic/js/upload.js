@@ -2,19 +2,21 @@ ckan.module("external-storage-upload", function ($) {
   "use strict";
   return {
     options: {
+      packageId: null,
       serverUrl: null,
       storagePrefix: null,
       authzScope: null,
-      i18n: {},
+      i18n: {
+        'resource_updated': 'Resource updated successfully'
+      },
     },
 
-    _packageId: null,
     _clickedBtn: null,
     _redirect_url: null,
 
     initialize: function () {
       console.log("Initializing external-storage-upload CKAN JS module");
-      $.proxyAll(this, /_on/);
+      $.proxyAll(this, /^_/);
       // this._url = $('#field-image-url');
       this._form = this.$("form");
       this._save = $("[name=save]");
@@ -22,8 +24,9 @@ ckan.module("external-storage-upload", function ($) {
       this._file = null;
 
       var self = this;
+
       $("#field-image-upload").on("change", function (event) {
-        if (!window.FileList) {
+        if (! window.FileList) {
           return;
         }
         self._file = event.target.files[0];
@@ -34,38 +37,96 @@ ckan.module("external-storage-upload", function ($) {
 
     _onFormSubmit: function (event) {
       // Check if we have anything to upload
-      if (!this._file) {
+      if (! this._file) {
         return;
       }
 
       event.preventDefault();
 
-      var dataset_id = this.options.packageId;
       this._clickedBtn = $(event.target).attr('value');
+
       if (this._clickedBtn == 'go-dataset') {
-          this._onDisableSave(false);
-          this._redirect_url = this.sandbox.url(
-              '/dataset/edit/' +
-              dataset_id);
-          window.location = this._redirect_url;
+        // User clicked to go back to the dataset
+        this._setSaveDisabled(false);
+        var url = this.sandbox.url('/dataset/edit/' + this.options.packageId);
+        window.location = url;
       } else {
-          try{
-              this._onDisableSave(true);
-              this._onSend();
-            console.log("file send")
-          } catch(error){
-              console.log(error);
-              this._onDisableSave(false);
-          }
+        // User clicked "Finish" or "Save and Add"
+        try {
+          this._setSaveDisabled(true);
+          this._saveResource();
+        } catch(error){
+          this._handleError(error);
+          this._setSaveDisabled(false);
+        }
       }
     },
 
-    _onSend: function () {
-      var file = new ckanUploader.FileAPI.HTML5File(this._file);
-
-      var prefix = this.options.storagePrefix.split("/");
+    _saveResource: function () {
       var scopes = [this.options.authzScope];
-      var serverUrl = this.options.serverUrl;
+      var self = this;
+      
+      this._generateAuthToken(scopes)
+        .then(this._uploadFileToStorage)
+        .then(this._updateResourceMetadata)
+        .then(function (resourceData) {
+          console.log(resourceData);
+          self._setSaveDisabled(false);
+
+          if (resourceData.package_id && resourceData.id){
+            self.sandbox.notify('Success', self.i18n('resource_updated'), 'success');
+            
+            if (self._clickedBtn == 'again') {
+              return self.sandbox.url('/dataset/new_resource/' + resourceData.package_id);
+            } else {
+              // Call package_patch to set state = 'active'
+              return self._updateDatasetState(resourceData.package_id)
+                .then(function() {
+                  return self.sandbox.url('/dataset/' + resourceData.package_id);
+                });
+            }
+          }
+        })
+        .then(function (redirectUrl) {
+          
+          // Use form.submit() to avoid being asked if we want to leave the page
+          self._form.attr('action', redirectUrl);
+          self._form.attr('method', 'GET');
+          self.$('[name]').attr('name', null);
+          setTimeout(function() {
+            self._form.submit();
+          }, 3000);
+        })
+        .catch(function (error) {
+          self._handleError(error);
+        });
+    },
+
+    _updateDatasetState: function (packageId) {
+      var dfd = $.Deferred();
+      this.sandbox.client.call(
+        'POST',
+        'package_patch',
+        {
+          "id": packageId, 
+          "state": "active"
+        },
+        function (data) {
+          if (data.success) {
+            dfd.resolve(data.result);
+          } else {
+            console.log(data);
+            dfd.reject("Failed to update dataset state to 'active'");
+          }
+        },
+        function (err, st, msg) {
+          dfd.reject(msg);
+        }
+      );
+      return dfd.promise();
+    },
+
+    _updateResourceMetadata: function (pushResult) {
       var formData = this._form
         .serializeArray()
         .reduce(function (result, item) {
@@ -73,38 +134,51 @@ ckan.module("external-storage-upload", function ($) {
           return result;
         }, {});
 
-      var self = this;
+      formData.package_id = this.options.packageId;
+      formData.url_type = "upload";
+      formData.url = pushResult.name;
+      formData.size = pushResult.size;
+      formData.sha256 = pushResult.oid;
 
-      this._getAuthzToken(scopes)
-        .then(function (token) {
-          var uploader = new ckanUploader.DataHub(
-            token,
-            prefix[0],
-            prefix[1],
-            serverUrl
-          );
-          var pushResponse = uploader.push(file, token);
-          return pushResponse;
-        })
-        .then(function (response) {
-          formData.multipart_name = file.file.name;
-          formData.url = file.file.name;
-          formData.size = file.file.size;
-          formData.url_type = "upload";
-          formData._sha256 = file._sha256;
-          var action = formData.id ? "resource_update" : "resource_create";
-          console.log("FormData: ", formData);
-          console.log("");
-          console.log("Response: ", response);
-          console.log("File: ", file);
-          console.log("Action: ", action);
-        })
-        .catch(function (error) {
-          self._onHandleError(error);
+      var action = formData.id ? "resource_update" : "resource_create";
+
+      if (pushResult.fileExists) {
+        this.sandbox.notify("File already exists in storage", "it will not be re-uploaded", "success");
+      }
+      
+      var dfd = $.Deferred();
+      this.sandbox.client.call(
+        'POST',
+        action,
+        formData,
+        function (data) {
+          if (data.success) {
+            dfd.resolve(data.result);
+          } else {
+            console.log(data);
+            dfd.reject("Failed to save resource");
+          }
+        },
+        function (err, st, msg) {
+          dfd.reject(msg);
+        }
+      );
+
+      return dfd.promise();
+    },
+
+    _uploadFileToStorage: function (authToken) {
+        var serverUrl = this.options.serverUrl;
+        var prefix = this.options.storagePrefix.split("/");
+        var file = new ckanUploader.FileAPI.HTML5File(this._file);
+
+        var uploader = new ckanUploader.DataHub(authToken, prefix[0], prefix[1], serverUrl);
+        return uploader.push(file, authToken, function(progressEvent) {
+          console.log("Progress: " + (progressEvent.loaded / progressEvent.total) * 100 + '%');
         });
-    },  
+    },
 
-    _getAuthzToken: function (scopes) {
+    _generateAuthToken: function (scopes) {
       var dfd = $.Deferred();
 
       this.sandbox.client.call(
@@ -118,7 +192,6 @@ ckan.module("external-storage-upload", function ($) {
         },
 
         function (error) {
-          console.log(error);
           dfd.reject(error);
         }
       );
@@ -126,12 +199,13 @@ ckan.module("external-storage-upload", function ($) {
       return dfd.promise();
     },
 
-    _onHandleError: function (msg) {
+    _handleError: function (msg) {
       this.sandbox.notify("Error", msg, "error");
-      this._onDisableSave(false);
+      console.log("Error: ", msg);
+      this._setSaveDisabled(false);
     },
 
-    _onDisableSave: function (value) {
+    _setSaveDisabled: function (value) {
       this._save.attr("disabled", value);
     },
   };
