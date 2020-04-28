@@ -17,20 +17,12 @@ ckan.module("external-storage-upload", function ($) {
     initialize: function () {
       console.log("Initializing external-storage-upload CKAN JS module");
       $.proxyAll(this, /^_/);
-      this._url = $('#field-image-url');
+
       this._form = this.$("form");
       this._save = $("[name=save]");
-      this._id = $("input[name=id]");
+      this._progressContainer = $("#upload-progress-bar");
+      this._progressBar = $("#upload-progress-bar .progress-bar");
       this._file = null;
-      this._progress = $('<div>', {
-        class: 'form-group controls progress progress-striped active',
-        style: 'display: none'
-      });
-      this._bar = $('<div>', {
-        class: 'progress-bar bar',
-        style: 'min-width:2em'}).text('0%');
-      this._progress.append(this._bar);
-      this._progress.insertAfter(this._url.parent().parent());
 
       var self = this;
 
@@ -51,14 +43,12 @@ ckan.module("external-storage-upload", function ($) {
       }
 
       event.preventDefault();
-    ;
       this._clickedBtn = $(event.target).attr('value');
 
-      if (this._clickedBtn == 'go-dataset') {
+      if (this._clickedBtn === 'go-dataset') {
         // User clicked to go back to the dataset
         this._setSaveDisabled(false);
-        var url = this.sandbox.url('/dataset/edit/' + this.options.packageId);
-        window.location = url;
+        window.location = this.sandbox.url('/dataset/edit/' + this.options.packageId);
       } else {
         // User clicked "Finish" or "Save and Add"
         try {
@@ -84,8 +74,8 @@ ckan.module("external-storage-upload", function ($) {
 
           if (resourceData.package_id && resourceData.id){
             self.sandbox.notify('Success', self.i18n('resource_updated'), 'success');
-            self._setProgressType('success', self._progress);
-            if (self._clickedBtn == 'again') {
+            self._setProgressBarClass('success', self._progressContainer);
+            if (self._clickedBtn === 'again') {
               return self.sandbox.url('/dataset/new_resource/' + resourceData.package_id);
             } else {
               // Call package_patch to set state = 'active'
@@ -142,20 +132,20 @@ ckan.module("external-storage-upload", function ($) {
           result[item.name] = item.value;
           return result;
         }, {});
+      var action = formData.id ? "resource_update" : "resource_create";
+      var dfd = $.Deferred();
 
       formData.package_id = this.options.packageId;
       formData.url_type = "upload";
       formData.url = pushResult.name;
       formData.size = pushResult.size;
       formData.sha256 = pushResult.oid;
-
-      var action = formData.id ? "resource_update" : "resource_create";
+      formData.lfs_prefix = this.options.storagePrefix;
 
       if (pushResult.fileExists) {
         this.sandbox.notify("File already exists in storage", "it will not be re-uploaded", "success");
       }
-      
-      var dfd = $.Deferred();
+
       this.sandbox.client.call(
         'POST',
         action,
@@ -180,17 +170,16 @@ ckan.module("external-storage-upload", function ($) {
         var serverUrl = this.options.serverUrl;
         var prefix = this.options.storagePrefix.split("/");
         var file = new ckanUploader.FileAPI.HTML5File(this._file);
-
         var uploader = new ckanUploader.DataHub(authToken, prefix[0], prefix[1], serverUrl);
-        this._setProgressType('info', this._progress);
-        this._progress.show('slow')
-        return uploader.push(file, authToken, this._onProgress);
+
+        this._setProgressBarClass('info', this._progressContainer);
+        this._progressContainer.show('slow');
+        return uploader.push(file, authToken, this._onUploadProgress);
     },
 
-    _onProgress: function(progressEvent) {
-      var progress = + (progressEvent.loaded / progressEvent.total) * 100;
-      this._setProgress(progress, this._bar);
-      console.log(Math.round(progress, 2) + "%")
+    _onUploadProgress: function(progressEvent) {
+      var progress = (progressEvent.loaded / progressEvent.total) * 100;
+      this._setProgress(progress, this._progressBar);
     },
 
     _setProgress: function (progress, bar) {
@@ -198,7 +187,7 @@ ckan.module("external-storage-upload", function ($) {
       bar.text(Math.round(progress) + '%');
     },
 
-    _setProgressType: function (type, progress) {
+    _setProgressBarClass: function (type, progress) {
       progress
           .removeClass('progress-success progress-danger progress-info')
           .addClass('progress-' + type);
@@ -228,6 +217,7 @@ ckan.module("external-storage-upload", function ($) {
     _handleError: function (msg) {
       this.sandbox.notify("Error", msg, "error");
       console.log("Error: ", msg);
+      this._setProgressBarClass('progress-danger', this._progressContainer);
       this._setSaveDisabled(false);
     },
 
