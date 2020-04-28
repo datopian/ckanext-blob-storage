@@ -1,7 +1,11 @@
 {% resource 'external-storage/js/upload.js' %}
+{% resource 'external-storage/js/dist/index.js' %}
 
 <div data-module="external-storage-upload"
-     data-module-server-url="http://127.0.0.1:9414"
-     data-module-package-id="{{ pkg_name }}">
+     data-module-package-id="{{ pkg_name }}"
+     data-module-server-url="{{ h.extstorage_server_url() }}"
+     data-module-storage-prefix="{{ h.extstorage_resource_storage_prefix(pkg_name) }}"
+     data-module-authz-scope="{{ h.extstorage_resource_authz_scope(pkg_name) }}"
+>
     {{ parent() }}
 </div>

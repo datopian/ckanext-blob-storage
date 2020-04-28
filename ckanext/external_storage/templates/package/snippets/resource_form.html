@@ -1,0 +1,10 @@
+{% ckan_extends %}
+
+{% block basic_fields_url %}
+    {{ super() }}
+    {% block upload_progress_bar %}
+        <div id="upload-progress-bar" class="form-group controls progress progress-striped active" style="display: none">
+            <div class="progress-bar bar" style="min-width: 2em">0%</div>
+        </div>
+    {% endblock %}
+{% endblock %}
