@@ -3,7 +3,6 @@ from typing import Any, Dict
 
 from ckan import model
 from ckan.tests import helpers
-
 from mock import patch
 
 
