@@ -35,4 +35,7 @@ def resource_authz_scope(package_name, actions=None):
 
 
 def server_url():
-    return 'http://127.0.0.1:9419'
+    # type: () -> Optional[str]
+    """Get the configured server URL
+    """
+    return toolkit.config.get('ckanext.external_storage.storage_service_url')
