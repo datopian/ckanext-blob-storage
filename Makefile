@@ -7,15 +7,16 @@ SHELL := bash
 PYTHON := python
 PIP := pip
 PIP_COMPILE := pip-compile
-ISORT := isort
-FLAKE8 := flake8
-NOSETESTS := nosetests
+PYTEST := pytest
 PASTER := paster
 DOCKER_COMPOSE := docker-compose
 GIT := git
 
 # Find GNU sed in path (on OS X gsed should be preferred)
 SED := $(shell which gsed sed | head -n1)
+
+# The `ckan` command line only exists in newer versions of CKAN
+CKAN_CLI := $(shell which ckan | head -n1)
 
 TEST_INI_PATH := ./test.ini
 SENTINELS := .make-status
@@ -125,7 +126,11 @@ docker-up: .env
 	@echo " \
     	CREATE ROLE $(DATASTORE_DB_RO_USER) NOSUPERUSER NOCREATEDB NOCREATEROLE LOGIN PASSWORD '$(DATASTORE_DB_RO_PASSWORD)'; \
     	CREATE DATABASE $(DATASTORE_DB_NAME) OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
+    	CREATE DATABASE $(DATASTORE_DB_NAME)_test OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
+    	CREATE DATABASE $(POSTGRES_DB)_test OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
     	GRANT ALL PRIVILEGES ON DATABASE $(DATASTORE_DB_NAME) TO $(POSTGRES_USER);  \
+    	GRANT ALL PRIVILEGES ON DATABASE $(DATASTORE_DB_NAME)_test TO $(POSTGRES_USER);  \
+    	GRANT ALL PRIVILEGES ON DATABASE $(POSTGRES_DB)_test TO $(POSTGRES_USER);  \
     " | $(DOCKER_COMPOSE) exec -T db psql --username "$(POSTGRES_USER)"
 .PHONY: docker-up
 
@@ -172,6 +177,19 @@ $(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
 
 $(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
+	$(PASTER) --plugin=ckan config-tool $(TEST_INI_PATH) \
+		debug=true \
+		ckan.site_url=$(CKAN_SITE_URL) \
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)_test \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
+		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
+		ckan.storage_path='%(here)s/storage' \
+		solr_url=http://127.0.0.1:8983/solr/ckan_test \
+		ckanext.external_storage.storage_service_url=http://localhost:9419 \
+		ckanext.authz_service.jwt_algorithm=HS256 \
+		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
+		ckanext.authz_service.jwt_include_user_email=true
 	@touch $@
 
 $(SENTINELS)/requirements: requirements.py$(PYTHON_VERSION).txt dev-requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
@@ -190,16 +208,20 @@ $(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS
 	@touch $@
 
 $(SENTINELS)/dev-setup: $(SENTINELS)/develop
+ifdef CKAN_CLI
+	$(CKAN_CLI) -c $(TEST_INI_PATH) db init
+else
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
+endif
 	@touch $@
 
 $(SENTINELS)/tests-passed: $(SENTINELS)/dev-setup $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
-	$(ISORT) -rc -df -c $(PACKAGE_DIR)
-	$(FLAKE8) --statistics $(PACKAGE_DIR)
-	$(NOSETESTS) --ckan \
-	      --with-pylons=$(TEST_INI_PATH) \
-          --nologcapture \
-          --with-doctest
+	$(PYTEST) \
+		--flake8 \
+		--isort \
+		--ckan-ini=$(TEST_INI_PATH) \
+		--doctest-modules \
+		$(PACKAGE_DIR)
 	@touch $@
 
 # Help related variables and targets
