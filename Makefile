@@ -38,22 +38,18 @@ DATASTORE_DB_RO_USER := datastore_ro
 DATASTORE_DB_RO_PASSWORD := datastore_ro
 CKAN_LOAD_PLUGINS := external_storage authz_service stats text_view image_view recline_view datastore
 
+ifdef WITH_COVERAGE
+  COVERAGE_ARG := --cov=$(PACKAGE_NAME)
+else
+  COVERAGE_ARG := ""
+endif
+
 
 dev-requirements.%.txt: dev-requirements.in
 	$(PIP_COMPILE) --no-index dev-requirements.in -o $@
 
 requirements.%.txt: requirements.in
 	$(PIP_COMPILE) --no-index requirements.in -o $@
-
-.coverage: $(SENTINELS)/tests-passed $(shell find $(PACKAGE_DIR) -type f) .coveragerc
-	$(NOSETESTS) --ckan \
-	      --with-pylons=$(TEST_INI_PATH) \
-          --nologcapture \
-		  --with-coverage \
-          --cover-package=$(PACKAGE_NAME) \
-          --cover-inclusive \
-          --cover-erase \
-          --cover-tests
 
 ## Update requirements files for the current Python version
 requirements: $(SENTINELS)/requirements
@@ -70,10 +66,6 @@ develop: $(SENTINELS)/develop
 ## Run all tests
 test: $(SENTINELS)/tests-passed
 .PHONY: test
-
-## Run test coverage report
-coverage: .coverage
-.PHONY: coverage
 
 $(CKAN_PATH):
 	$(GIT) clone $(CKAN_REPO_URL) $@
@@ -221,6 +213,7 @@ $(SENTINELS)/tests-passed: $(SENTINELS)/dev-setup $(shell find $(PACKAGE_DIR) -t
 		--isort \
 		--ckan-ini=$(TEST_INI_PATH) \
 		--doctest-modules \
+		$(COVERAGE_ARG) \
 		$(PACKAGE_DIR)
 	@touch $@
 

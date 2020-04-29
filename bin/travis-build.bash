@@ -29,9 +29,15 @@ else
     echo "CKAN version: ${CKAN_TAG#ckan-}"
 fi
 
+
+if [ -e requirement-setuptools.txt ]
+then
+    pip install -r requirement-setuptools.txt
+fi
+
 python setup.py develop
 
-if (( $CKAN_MINOR_VERSION >= 9 )) && (( $PYTHON_MAJOR_VERSION == 2 ))
+if [[ "$PYTHON_MAJOR_VERSION" == "2" && -e requirements-py2.txt ]]
 then
     pip install -r requirements-py2.txt
 else
@@ -55,18 +61,5 @@ sudo -u postgres psql -c "CREATE USER ckan WITH PASSWORD 'ckan';"
 sudo -u postgres psql -c "CREATE USER datastore_ro WITH PASSWORD 'datastore_ro';"
 sudo -u postgres psql -c 'CREATE DATABASE ckan_test WITH OWNER ckan;'
 sudo -u postgres psql -c 'CREATE DATABASE datastore_test WITH OWNER ckan;'
-
-echo "Initialising the database..."
-cd ckan
-if (( $CKAN_MINOR_VERSION >= 9 ))
-then
-    ckan -c test-core.ini db init
-else
-    paster db init -c test-core.ini
-fi
-cd -
-
-echo "Installing ckanext-external-storage and its requirements..."
-make install develop CKAN_PATH=./ckan
 
 echo "travis-build.bash is done."
