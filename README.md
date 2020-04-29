@@ -70,21 +70,21 @@ To install `ckanext-external-storage` for development, do the following:
 
 * Pull the project code from Github:
 
-
+```
     git clone https://github.com/datopian/ckanext-external-storage.git
     cd ckanext-external-storage
-    
+``` 
 * Create a Python 2.7 virtual environment:
 
-
+```
     virtualenv .venv27
     source .venv27/bin/activate
-    
+```    
 * Run the following command to bootstrap the entire environment:
 
-
+```
     make dev-start
-    
+```    
 This will pull and install CKAN and all it's dependencies into your virtual
 environment, create all necessary configuration files, launch external services
 using Docker Compose and start the CKAN development server.
