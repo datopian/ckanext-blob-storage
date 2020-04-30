@@ -38,6 +38,26 @@ DATASTORE_DB_RO_USER := datastore_ro
 DATASTORE_DB_RO_PASSWORD := datastore_ro
 CKAN_LOAD_PLUGINS := external_storage authz_service stats text_view image_view recline_view datastore
 
+CKAN_CONFIG_VALUES := \
+		debug=true \
+		ckan.site_url=$(CKAN_SITE_URL) \
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
+		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
+		ckan.storage_path='%(here)s/storage' \
+		solr_url=http://127.0.0.1:8983/solr/ckan \
+		ckanext.external_storage.storage_service_url=http://localhost:9419 \
+		ckanext.authz_service.jwt_algorithm=HS256 \
+		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
+		ckanext.authz_service.jwt_include_user_email=true
+
+CKAN_TEST_CONFIG_VALUES := \
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)_test \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
+		solr_url=http://127.0.0.1:8983/solr/ckan_test
+
 ifdef WITH_COVERAGE
   COVERAGE_ARG := --cov=$(PACKAGE_NAME)
 else
@@ -72,20 +92,11 @@ $(CKAN_PATH):
 
 $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
 	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
-	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) \
-		debug=true \
-		ckan.site_url=$(CKAN_SITE_URL) \
-		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
-		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
-		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
-		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
-		ckan.storage_path='%(here)s/storage' \
-		solr_url=http://127.0.0.1:8983/solr/ckan \
-		ckanext.external_storage.storage_service_url=http://localhost:9419 \
-		ckanext.authz_service.jwt_algorithm=HS256 \
-		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
-		ckanext.authz_service.jwt_include_user_email=true
-
+ifdef CKAN_CLI
+	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
+else
+	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
+endif
 
 ## Install the right version of CKAN into the virtual environment
 ckan-install: $(SENTINELS)/ckan-installed
@@ -94,8 +105,14 @@ ckan-install: $(SENTINELS)/ckan-installed
 
 ## Run CKAN in the local virtual environment
 ckan-start: $(SENTINELS)/ckan-installed $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_virtualenv
+ifdef CKAN_CLI
+	$(CKAN_CLI) -c $(CKAN_CONFIG_FILE) db init
+	$(CKAN_CLI) -c $(CKAN_CONFIG_FILE) server -r
+else
 	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan serve --reload $(CKAN_CONFIG_FILE)
+endif
+
 .PHONY: ckan-start
 
 .env:
@@ -169,19 +186,11 @@ $(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
 
 $(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
-	$(PASTER) --plugin=ckan config-tool $(CKAN_PATH)/test-core.ini \
-		debug=true \
-		ckan.site_url=$(CKAN_SITE_URL) \
-		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)_test \
-		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
-		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
-		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
-		ckan.storage_path='%(here)s/storage' \
-		solr_url=http://127.0.0.1:8983/solr/ckan_test \
-		ckanext.external_storage.storage_service_url=http://localhost:9419 \
-		ckanext.authz_service.jwt_algorithm=HS256 \
-		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
-		ckanext.authz_service.jwt_include_user_email=true
+ifdef CKAN_CLI
+	$(CKAN_CLI) $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES) $(CKAN_TEST_CONFIG_VALUES)
+else
+	$(PASTER) --plugin=ckan config-tool $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES) $(CKAN_TEST_CONFIG_VALUES)
+endif
 	@touch $@
 
 $(SENTINELS)/requirements: requirements.py$(PYTHON_VERSION).txt dev-requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
@@ -199,7 +208,7 @@ $(SENTINELS)/install-dev: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 $(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/install-dev $(SENTINELS)/test.ini setup.py | $(SENTINELS)
 	@touch $@
 
-$(SENTINELS)/dev-setup: $(SENTINELS)/develop
+$(SENTINELS)/test-setup: $(SENTINELS)/develop
 ifdef CKAN_CLI
 	$(CKAN_CLI) -c $(TEST_INI_PATH) db init
 else
@@ -207,7 +216,7 @@ else
 endif
 	@touch $@
 
-$(SENTINELS)/tests-passed: $(SENTINELS)/dev-setup $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
+$(SENTINELS)/tests-passed: $(SENTINELS)/test-setup $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
 	$(PYTEST) \
 		--flake8 \
 		--isort \
