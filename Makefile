@@ -87,17 +87,6 @@ develop: $(SENTINELS)/develop
 test: $(SENTINELS)/tests-passed
 .PHONY: test
 
-$(CKAN_PATH):
-	$(GIT) clone $(CKAN_REPO_URL) $@
-
-$(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
-	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
-ifdef CKAN_CLI
-	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
-else
-	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
-endif
-
 ## Install the right version of CKAN into the virtual environment
 ckan-install: $(SENTINELS)/ckan-installed
 	@echo "Current CKAN version: $(shell cat $(SENTINELS)/ckan-version)"
@@ -112,8 +101,18 @@ else
 	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan serve --reload $(CKAN_CONFIG_FILE)
 endif
-
 .PHONY: ckan-start
+
+$(CKAN_PATH):
+	$(GIT) clone $(CKAN_REPO_URL) $@
+
+$(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
+	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
+ifdef CKAN_CLI
+	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
+else
+	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
+endif
 
 .env:
 	@___POSTGRES_USER=$(POSTGRES_USER) \
@@ -171,7 +170,12 @@ $(SENTINELS):
 $(SENTINELS)/ckan-version: $(CKAN_PATH) | _check_virtualenv $(SENTINELS)
 	$(GIT) -C $(CKAN_PATH) remote update
 	$(GIT) -C $(CKAN_PATH) checkout $(CKAN_VERSION)
-	$(PIP) install -r $(CKAN_PATH)/requirements.txt
+	if [ -e requirement-setuptools.txt ]; then; $(PIP) install -r requirement-setuptools.txt; fi
+	if [[ "$(PYTHON_VERSION)" == "2" && -e requirements-py2.txt ]]; then; \
+	  $(PIP) install -r requirements-py2.txt \
+	else \
+	  $(PIP) install -r requirements.txt \
+	fi
 	$(PIP) install -r $(CKAN_PATH)/dev-requirements.txt
 	$(PIP) install -e $(CKAN_PATH)
 	echo "$(CKAN_VERSION)" > $@
@@ -205,10 +209,10 @@ $(SENTINELS)/install-dev: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 	$(PIP) install -e .
 	@touch $@
 
-$(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/install-dev $(SENTINELS)/test.ini setup.py | $(SENTINELS)
+$(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/install-dev setup.py | $(SENTINELS)
 	@touch $@
 
-$(SENTINELS)/test-setup: $(SENTINELS)/develop
+$(SENTINELS)/test-setup: $(SENTINELS)/develop $(SENTINELS)/test.ini
 ifdef CKAN_CLI
 	$(CKAN_CLI) -c $(TEST_INI_PATH) db init
 else
