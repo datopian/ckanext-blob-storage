@@ -37,12 +37,12 @@ To install ckanext-external-storage:
 
 1. Activate your CKAN virtual environment, for example:
 ```
-     . /usr/lib/ckan/default/bin/activate
+. /usr/lib/ckan/default/bin/activate
 ```
 
 2. Install the ckanext-external-storage Python package into your virtual environment:
 ```
-     pip install ckanext-external-storage
+pip install ckanext-external-storage
 ```
 
 3. Add `external_storage` to the `ckan.plugins` setting in your CKAN
@@ -51,7 +51,7 @@ To install ckanext-external-storage:
 
 4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu:
 ```
-     sudo service apache2 reload
+sudo service apache2 reload
 ```
 
 Configuration settings
@@ -68,23 +68,21 @@ Developer installation
 
 To install `ckanext-external-storage` for development, do the following:
 
-* Pull the project code from Github:
-
+1. Pull the project code from Github
 ```
-    git clone https://github.com/datopian/ckanext-external-storage.git
-    cd ckanext-external-storage
-``` 
-* Create a Python 2.7 virtual environment:
-
+git clone https://github.com/datopian/ckanext-external-storage.git 
+cd ckanext-external-storage 
 ```
-    virtualenv .venv27
-    source .venv27/bin/activate
-```    
-* Run the following command to bootstrap the entire environment:
-
+2. Create a Python 2.7 virtual environment
 ```
-    make dev-start
-```    
+virtualenv .venv27
+source .venv27/bin/activate
+```
+3. Run the following command to bootstrap the entire environment
+```
+make dev-start
+```
+
 This will pull and install CKAN and all it's dependencies into your virtual
 environment, create all necessary configuration files, launch external services
 using Docker Compose and start the CKAN development server.
