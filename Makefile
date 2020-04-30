@@ -109,7 +109,7 @@ $(CKAN_PATH):
 $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
 	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 ifdef CKAN_CLI
-	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
+	$(CKAN_CLI) config-tool -c $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 else
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 endif
