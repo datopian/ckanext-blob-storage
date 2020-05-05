@@ -1,10 +1,9 @@
 """ckanext-external-storage Flask blueprints
 """
-from flask import Blueprint, send_file
-
 from ckan import model
-import ckan.lib.uploader as uploader
+from ckan.lib import uploader
 from ckan.plugins import toolkit
+from flask import Blueprint, send_file
 
 blueprint = Blueprint(
     'extstorage',
