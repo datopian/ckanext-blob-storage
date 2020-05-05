@@ -170,7 +170,7 @@ ckan.module("external-storage-upload", function ($) {
         var serverUrl = this.options.serverUrl;
         var prefix = this.options.storagePrefix.split("/");
         var file = new ckanUploader.FileAPI.HTML5File(this._file);
-        var uploader = new ckanUploader.DataHub(authToken, prefix[0], prefix[1], serverUrl);
+        var uploader = new ckanUploader.Uploader(authToken, prefix[0], prefix[1], serverUrl);
 
         this._setProgressBarClass('info', this._progressContainer);
         this._progressContainer.show('slow');
