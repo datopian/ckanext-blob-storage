@@ -78,7 +78,18 @@ cd ckanext-external-storage
 virtualenv .venv27
 source .venv27/bin/activate
 ```
-3. Run the following command to bootstrap the entire environment
+
+3. Install the dependencies
+```
+npm install
+```
+
+4. Generate the [ckan3-js-sdk](https://github.com/datopian/ckan3-js-sdk) bundle
+```
+npm run build
+```
+
+5. Run the following command to bootstrap the entire environment
 ```
 make dev-start
 ```
