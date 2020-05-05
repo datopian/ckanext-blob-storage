@@ -28,7 +28,7 @@ class LfsClient(object):
             payload['ref'] = ref
 
         response = requests.post(url, json=payload, headers={
-            'Authorization': self.authz_token,
+            'Authorization': 'Bearer {}'.format(self.authz_token),
             'Content-type': self.LFS_MIME_TYPE,
             'Accept': self.LFS_MIME_TYPE
         })

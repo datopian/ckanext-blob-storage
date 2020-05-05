@@ -3,7 +3,7 @@ import ckan.plugins.toolkit as toolkit
 
 from ckanext.authz_service.interfaces import IAuthorizationBindings
 
-from . import helpers
+from . import actions, helpers
 from .blueprints import blueprint
 
 
@@ -32,6 +32,11 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
 
     def get_blueprint(self):
         return blueprint
+
+    # IActions
+
+    def get_actions(self):
+        return {'get_resource_download_spec': actions.get_resource_download_spec}
 
     # IAuthorizationBindings
 

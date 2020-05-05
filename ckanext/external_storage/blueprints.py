@@ -6,10 +6,8 @@ from ckan import model
 import ckan.lib.uploader as uploader
 from ckan.plugins import toolkit
 
-
-# TODO: 2.8.1 does not allow multiple blueprints per plugin, so we need to add all custom ones to the same one
 blueprint = Blueprint(
-    'gdx',
+    'extstorage',
     __name__,
 )
 
@@ -19,8 +17,9 @@ def download(resource_id, filename=None, **__):
     download method if resource is not managed by External Storage
     """
     context = {
-        u'model': model,
-        u'user': toolkit.c.user,
+        'model': model,
+        'user': toolkit.c.user,
+        'auth_user_obj': toolkit.c.userobj,
     }
     try:
         resource = toolkit.get_action('resource_show')(context, {'id': resource_id})
@@ -31,7 +30,7 @@ def download(resource_id, filename=None, **__):
 
     if resource.get('url_type') == 'upload' and resource.get('lfs_prefix'):
         # We are in LFS land!
-        return redirect_to_external_storage(resource, filename)
+        return redirect_to_external_storage(context, resource, filename)
     return fallback_download_method(resource)
 
 
@@ -39,10 +38,16 @@ blueprint.add_url_rule(u'/dataset/<id>/resource/<resource_id>/download', view_fu
 blueprint.add_url_rule(u'/dataset/<id>/resource/<resource_id>/download/<filename>', view_func=download)
 
 
-def redirect_to_external_storage(resource, filename):
+def redirect_to_external_storage(context, resource, filename):
     """Get the download URL from LFS server and redirect the user there
     """
-    extstorage_url = toolkit.get_action()
+    data_dict = {'resource': resource}
+    resource_download_spec = toolkit.get_action('get_resource_download_spec')(context, data_dict)
+    href = resource_download_spec.get('href')
+    if href:
+        return toolkit.redirect_to(href)
+    else:
+        return toolkit.abort(404, _(u'No download is available'))
 
 
 def fallback_download_method(resource):

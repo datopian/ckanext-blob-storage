@@ -6,25 +6,20 @@ from . import helpers
 from .lfs_client import LfsClient, LfsError
 
 
-@toolkit.sideeffect_free
-def extstorage_get_resource_url(context, data_dict):
+@toolkit.side_effect_free
+def get_resource_download_spec(context, data_dict):
     """Get a signed URL from LFS server to download a resource
     """
     if 'resource' in data_dict:
         resource = data_dict['resource']
     else:
-        resource = get_resource(data_dict.get['id'])
+        resource = _get_resource(context, data_dict.get['id'])
 
     for k in ('lfs_prefix', 'sha256', 'size'):
         if k not in resource:
             return {}
 
-    if 'package_name' in data_dict:
-        package_name = data_dict['package_name']
-    else:
-        package_name = get_package(resource['package_id'])['name']
-
-    org_name = resource['organization']['name']
+    org_name, package_name = resource['lfs_prefix'].split('/')
 
     authorize = toolkit.get_action('authz_authorize')
     if not authorize:
@@ -33,13 +28,13 @@ def extstorage_get_resource_url(context, data_dict):
     scope = helpers.resource_authz_scope(package_name, org_name=org_name, actions='read')
     authz_result = authorize(context, {"scopes": [scope]})
 
-    if not authz_result or not authz_result.get('success', False):
+    if not authz_result or not authz_result.get('token', False):
         raise RuntimeError("Failed to get authorization token for LFS server")
 
-    if len(authz_result['data']['granted_scopes']) == 0:
+    if len(authz_result['granted_scopes']) == 0:
         raise toolkit.NotAuthorized("You are not authorized to download this resource")
 
-    client = LfsClient(helpers.server_url(), authz_result['data']['token'])
+    client = LfsClient(helpers.server_url(), authz_result['token'])
     object = {"oid": resource['sha256'], "size": resource['size']}
 
     try:
@@ -63,3 +58,15 @@ def extstorage_get_resource_url(context, data_dict):
                                                                     object['error'].get('code', 'unknown')))
 
     return object['actions']['download']
+
+
+def _get_resource(context, resource_id):
+    """Get resource by ID
+    """
+    return toolkit.get_action('resource_show')(context, {'id': resource_id})
+
+
+def _get_package(context, package_id):
+    """Get package by ID
+    """
+    return toolkit.get_action('package_show')(context, {'id': package_id})

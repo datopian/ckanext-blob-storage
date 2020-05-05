@@ -79,8 +79,8 @@ $(CKAN_PATH):
 
 $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
 	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
+	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) -S DEFAULT debug=true
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) \
-		debug=true \
 		ckan.site_url=$(CKAN_SITE_URL) \
 		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
 		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
@@ -93,7 +93,6 @@ $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_v
 		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
 		ckanext.authz_service.jwt_include_user_email=true
 
-
 ## Install the right version of CKAN into the virtual environment
 ckan-install: $(SENTINELS)/ckan-installed
 	@echo "Current CKAN version: $(shell cat $(SENTINELS)/ckan-version)"
@@ -102,7 +101,7 @@ ckan-install: $(SENTINELS)/ckan-installed
 ## Run CKAN in the local virtual environment
 ckan-start: $(SENTINELS)/ckan-installed $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_virtualenv
 	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
-	$(PASTER) --plugin=ckan serve --reload $(CKAN_CONFIG_FILE)
+	$(PASTER) --plugin=ckan serve --reload --monitor-restart $(CKAN_CONFIG_FILE)
 .PHONY: ckan-start
 
 .env:
