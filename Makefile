@@ -7,15 +7,16 @@ SHELL := bash
 PYTHON := python
 PIP := pip
 PIP_COMPILE := pip-compile
-ISORT := isort
-FLAKE8 := flake8
-NOSETESTS := nosetests
+PYTEST := pytest
 PASTER := paster
 DOCKER_COMPOSE := docker-compose
 GIT := git
 
 # Find GNU sed in path (on OS X gsed should be preferred)
 SED := $(shell which gsed sed | head -n1)
+
+# The `ckan` command line only exists in newer versions of CKAN
+CKAN_CLI := $(shell which ckan | head -n1)
 
 TEST_INI_PATH := ./test.ini
 SENTINELS := .make-status
@@ -37,22 +38,37 @@ DATASTORE_DB_RO_USER := datastore_ro
 DATASTORE_DB_RO_PASSWORD := datastore_ro
 CKAN_LOAD_PLUGINS := external_storage authz_service stats text_view image_view recline_view datastore
 
+CKAN_CONFIG_VALUES := \
+		ckan.site_url=$(CKAN_SITE_URL) \
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
+		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
+		ckan.storage_path='%(here)s/storage' \
+		solr_url=http://127.0.0.1:8983/solr/ckan \
+		ckanext.external_storage.storage_service_url=http://localhost:9419 \
+		ckanext.authz_service.jwt_algorithm=HS256 \
+		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
+		ckanext.authz_service.jwt_include_user_email=true
+
+CKAN_TEST_CONFIG_VALUES := \
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)_test \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
+		solr_url=http://127.0.0.1:8983/solr/ckan_test
+
+ifdef WITH_COVERAGE
+  COVERAGE_ARG := --cov=$(PACKAGE_NAME)
+else
+  COVERAGE_ARG := ""
+endif
+
 
 dev-requirements.%.txt: dev-requirements.in
 	$(PIP_COMPILE) --no-index dev-requirements.in -o $@
 
 requirements.%.txt: requirements.in
 	$(PIP_COMPILE) --no-index requirements.in -o $@
-
-.coverage: $(SENTINELS)/tests-passed $(shell find $(PACKAGE_DIR) -type f) .coveragerc
-	$(NOSETESTS) --ckan \
-	      --with-pylons=$(TEST_INI_PATH) \
-          --nologcapture \
-		  --with-coverage \
-          --cover-package=$(PACKAGE_NAME) \
-          --cover-inclusive \
-          --cover-erase \
-          --cover-tests
 
 ## Update requirements files for the current Python version
 requirements: $(SENTINELS)/requirements
@@ -70,29 +86,6 @@ develop: $(SENTINELS)/develop
 test: $(SENTINELS)/tests-passed
 .PHONY: test
 
-## Run test coverage report
-coverage: .coverage
-.PHONY: coverage
-
-$(CKAN_PATH):
-	$(GIT) clone $(CKAN_REPO_URL) $@
-
-$(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
-	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
-	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) -S DEFAULT debug=true
-	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) \
-		ckan.site_url=$(CKAN_SITE_URL) \
-		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
-		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
-		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
-		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
-		ckan.storage_path='%(here)s/storage' \
-		solr_url=http://127.0.0.1:8983/solr/ckan \
-		ckanext.external_storage.storage_service_url=http://localhost:9419 \
-		ckanext.authz_service.jwt_algorithm=HS256 \
-		ckanext.authz_service.jwt_private_key=this-is-a-test-only-key \
-		ckanext.authz_service.jwt_include_user_email=true
-
 ## Install the right version of CKAN into the virtual environment
 ckan-install: $(SENTINELS)/ckan-installed
 	@echo "Current CKAN version: $(shell cat $(SENTINELS)/ckan-version)"
@@ -100,9 +93,27 @@ ckan-install: $(SENTINELS)/ckan-installed
 
 ## Run CKAN in the local virtual environment
 ckan-start: $(SENTINELS)/ckan-installed $(SENTINELS)/install-dev $(CKAN_CONFIG_FILE) | _check_virtualenv
+ifdef CKAN_CLI
+	$(CKAN_CLI) -c $(CKAN_CONFIG_FILE) db init
+	$(CKAN_CLI) -c $(CKAN_CONFIG_FILE) server -r
+else
 	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan serve --reload --monitor-restart $(CKAN_CONFIG_FILE)
+endif
 .PHONY: ckan-start
+
+$(CKAN_PATH):
+	$(GIT) clone $(CKAN_REPO_URL) $@
+
+$(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
+	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
+ifdef CKAN_CLI
+	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
+	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
+else
+	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
+	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
+endif
 
 .env:
 	@___POSTGRES_USER=$(POSTGRES_USER) \
@@ -124,7 +135,11 @@ docker-up: .env
 	@echo " \
     	CREATE ROLE $(DATASTORE_DB_RO_USER) NOSUPERUSER NOCREATEDB NOCREATEROLE LOGIN PASSWORD '$(DATASTORE_DB_RO_PASSWORD)'; \
     	CREATE DATABASE $(DATASTORE_DB_NAME) OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
+    	CREATE DATABASE $(DATASTORE_DB_NAME)_test OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
+    	CREATE DATABASE $(POSTGRES_DB)_test OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
     	GRANT ALL PRIVILEGES ON DATABASE $(DATASTORE_DB_NAME) TO $(POSTGRES_USER);  \
+    	GRANT ALL PRIVILEGES ON DATABASE $(DATASTORE_DB_NAME)_test TO $(POSTGRES_USER);  \
+    	GRANT ALL PRIVILEGES ON DATABASE $(POSTGRES_DB)_test TO $(POSTGRES_USER);  \
     " | $(DOCKER_COMPOSE) exec -T db psql --username "$(POSTGRES_USER)"
 .PHONY: docker-up
 
@@ -156,7 +171,12 @@ $(SENTINELS):
 $(SENTINELS)/ckan-version: $(CKAN_PATH) | _check_virtualenv $(SENTINELS)
 	$(GIT) -C $(CKAN_PATH) remote update
 	$(GIT) -C $(CKAN_PATH) checkout $(CKAN_VERSION)
-	$(PIP) install -r $(CKAN_PATH)/requirements.txt
+	if [ -e $(CKAN_PATH)/requirement-setuptools.txt ]; then $(PIP) install -r $(CKAN_PATH)/requirement-setuptools.txt; fi
+	if [[ "$(PYTHON_VERSION)" == "2" && -e $(CKAN_PATH)/requirements-py2.txt ]]; then \
+	  $(PIP) install -r $(CKAN_PATH)/requirements-py2.txt; \
+	else \
+	  $(PIP) install -r $(CKAN_PATH)/requirements.txt; \
+	fi
 	$(PIP) install -r $(CKAN_PATH)/dev-requirements.txt
 	$(PIP) install -e $(CKAN_PATH)
 	echo "$(CKAN_VERSION)" > $@
@@ -171,6 +191,11 @@ $(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
 
 $(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
+ifdef CKAN_CLI
+	$(CKAN_CLI) config-tool $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES)
+else
+	$(PASTER) --plugin=ckan config-tool $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES) $(CKAN_TEST_CONFIG_VALUES)
+endif
 	@touch $@
 
 $(SENTINELS)/requirements: requirements.py$(PYTHON_VERSION).txt dev-requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
@@ -185,20 +210,25 @@ $(SENTINELS)/install-dev: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 	$(PIP) install -e .
 	@touch $@
 
-$(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/install-dev $(SENTINELS)/test.ini setup.py | $(SENTINELS)
+$(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/install-dev setup.py | $(SENTINELS)
 	@touch $@
 
-$(SENTINELS)/dev-setup: $(SENTINELS)/develop
+$(SENTINELS)/test-setup: $(SENTINELS)/develop $(SENTINELS)/test.ini
+ifdef CKAN_CLI
+	$(CKAN_CLI) -c $(TEST_INI_PATH) db init
+else
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
+endif
 	@touch $@
 
-$(SENTINELS)/tests-passed: $(SENTINELS)/dev-setup $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
-	$(ISORT) -rc -df -c $(PACKAGE_DIR)
-	$(FLAKE8) --statistics $(PACKAGE_DIR)
-	$(NOSETESTS) --ckan \
-	      --with-pylons=$(TEST_INI_PATH) \
-          --nologcapture \
-          --with-doctest
+$(SENTINELS)/tests-passed: $(SENTINELS)/test-setup $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
+	$(PYTEST) \
+		--flake8 \
+		--isort \
+		--ckan-ini=$(TEST_INI_PATH) \
+		--doctest-modules \
+		$(COVERAGE_ARG) \
+		$(PACKAGE_DIR)
 	@touch $@
 
 # Help related variables and targets

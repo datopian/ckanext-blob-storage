@@ -41,4 +41,7 @@ def server_url():
     # type: () -> Optional[str]
     """Get the configured server URL
     """
-    return toolkit.config.get('ckanext.external_storage.storage_service_url')
+    url = toolkit.config.get('ckanext.external_storage.storage_service_url')
+    if url and url[-1] == '/':
+        url = url[0:-1]
+    return url

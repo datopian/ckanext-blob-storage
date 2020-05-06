@@ -22,8 +22,9 @@ env:
 install:
   - bash bin/travis-build.bash
   - pip install coveralls
+  - make develop CKAN_PATH=./ckan
 
-script: make test coverage CKAN_PATH=./ckan
+script: make test CKAN_PATH=./ckan WITH_COVERAGE=1
 
 after_success:
   - coveralls
