@@ -19,7 +19,8 @@ def resource_storage_prefix(package_name, org_name=None):
 
         org_name = package.get('organization', {}).get('name')
         if not org_name:
-            org = package.get('owner_org')
+            org = package.get('owner_org', {})
+            org_name = org.get('name')
 
     if not org_name:
         org_name = '_'

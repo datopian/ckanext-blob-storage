@@ -46,7 +46,7 @@ def redirect_to_external_storage(context, resource, filename):
     if href:
         return toolkit.redirect_to(href)
     else:
-        return toolkit.abort(404, _(u'No download is available'))
+        return toolkit.abort(404, toolkit._('No download is available'))
 
 
 def fallback_download_method(resource):
@@ -58,6 +58,6 @@ def fallback_download_method(resource):
         filepath = upload.get_path(resource[u'id'])
         return send_file(filepath)
     elif u'url' not in resource:
-        return toolkit.abort(404, _(u'No download is available'))
+        return toolkit.abort(404, toolkit._('No download is available'))
 
     return toolkit.redirect_to(resource[u'url'])
