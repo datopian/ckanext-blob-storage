@@ -98,7 +98,7 @@ ifdef CKAN_CLI
 	$(CKAN_CLI) -c $(CKAN_CONFIG_FILE) server -r
 else
 	$(PASTER) --plugin=ckan db init -c $(CKAN_CONFIG_FILE)
-	$(PASTER) --plugin=ckan serve --reload $(CKAN_CONFIG_FILE)
+	$(PASTER) --plugin=ckan serve --reload --monitor-restart $(CKAN_CONFIG_FILE)
 endif
 .PHONY: ckan-start
 

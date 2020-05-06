@@ -3,12 +3,15 @@ import ckan.plugins.toolkit as toolkit
 
 from ckanext.authz_service.interfaces import IAuthorizationBindings
 
-from . import helpers
+from . import actions, helpers
+from .blueprints import blueprint
 
 
 class ExternalStoragePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ITemplateHelpers)
+    plugins.implements(plugins.IBlueprint)
+    plugins.implements(plugins.IActions)
     plugins.implements(IAuthorizationBindings)
 
     # IConfigurer
@@ -24,6 +27,16 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
         return {'extstorage_server_url': helpers.server_url,
                 'extstorage_resource_authz_scope': helpers.resource_authz_scope,
                 'extstorage_resource_storage_prefix': helpers.resource_storage_prefix}
+
+    # IBlueprint
+
+    def get_blueprint(self):
+        return blueprint
+
+    # IActions
+
+    def get_actions(self):
+        return {'get_resource_download_spec': actions.get_resource_download_spec}
 
     # IAuthorizationBindings
 
