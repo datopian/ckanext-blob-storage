@@ -79,7 +79,7 @@ virtualenv .venv27
 source .venv27/bin/activate
 ```
 
-3. Install the dependencies
+3. Install client-side dependencies
 ```
 npm install
 ```
