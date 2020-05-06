@@ -39,7 +39,6 @@ DATASTORE_DB_RO_PASSWORD := datastore_ro
 CKAN_LOAD_PLUGINS := external_storage authz_service stats text_view image_view recline_view datastore
 
 CKAN_CONFIG_VALUES := \
-		debug=true \
 		ckan.site_url=$(CKAN_SITE_URL) \
 		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
 		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
@@ -109,8 +108,10 @@ $(CKAN_PATH):
 $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
 	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 ifdef CKAN_CLI
+	$(CKAN_CLI) config-tool -c $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
 	$(CKAN_CLI) config-tool -c $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 else
+	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 endif
 
@@ -191,7 +192,7 @@ $(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
 $(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
 ifdef CKAN_CLI
-	$(CKAN_CLI) $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES) $(CKAN_TEST_CONFIG_VALUES)
+	$(CKAN_CLI) config-tool -c $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES)
 else
 	$(PASTER) --plugin=ckan config-tool $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES) $(CKAN_TEST_CONFIG_VALUES)
 endif
