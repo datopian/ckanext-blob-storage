@@ -84,7 +84,7 @@ source .venv27/bin/activate
 npm install
 ```
 
-4. Generate the [ckan3-js-sdk](https://github.com/datopian/ckan3-js-sdk) bundle
+4. Generate a bundle of all client-side dependencies
 ```
 npm run build
 ```
