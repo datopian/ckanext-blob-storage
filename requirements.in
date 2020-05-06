@@ -1,4 +1,5 @@
 requests==2.*
 six==1.14.*
 typing==3.7.*
+-r https://raw.githubusercontent.com/datopian/ckanext-authz-service/v0.1.0/requirements.in
 git+https://github.com/datopian/ckanext-authz-service.git@v0.1.0#egg=ckanext-authz-service
