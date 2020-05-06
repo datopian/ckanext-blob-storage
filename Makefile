@@ -54,13 +54,12 @@ CKAN_CONFIG_VALUES := \
 CKAN_TEST_CONFIG_VALUES := \
 		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)_test \
 		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
-		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
-		solr_url=http://127.0.0.1:8983/solr/ckan_test
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test
 
 ifdef WITH_COVERAGE
   COVERAGE_ARG := --cov=$(PACKAGE_NAME)
 else
-  COVERAGE_ARG := ""
+  COVERAGE_ARG :=
 endif
 
 
@@ -192,7 +191,7 @@ $(SENTINELS)/ckan-installed: $(SENTINELS)/ckan-version | $(SENTINELS)
 $(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
 ifdef CKAN_CLI
-	$(CKAN_CLI) config-tool $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES)
+	$(CKAN_CLI) config-tool $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES) $(CKAN_TEST_CONFIG_VALUES)
 else
 	$(PASTER) --plugin=ckan config-tool $(CKAN_PATH)/test-core.ini $(CKAN_CONFIG_VALUES) $(CKAN_TEST_CONFIG_VALUES)
 endif
@@ -222,12 +221,11 @@ endif
 	@touch $@
 
 $(SENTINELS)/tests-passed: $(SENTINELS)/test-setup $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
-	$(PYTEST) \
+	$(PYTEST) $(COVERAGE_ARG) \
 		--flake8 \
 		--isort \
 		--ckan-ini=$(TEST_INI_PATH) \
 		--doctest-modules \
-		$(COVERAGE_ARG) \
 		$(PACKAGE_DIR)
 	@touch $@
 
