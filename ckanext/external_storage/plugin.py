@@ -5,6 +5,8 @@ from ckanext.authz_service.interfaces import IAuthorizationBindings
 
 from . import actions, helpers
 from .blueprints import blueprint
+from .download_handler import download_handler
+from .interfaces import IResourceDownloadHandler
 
 
 class ExternalStoragePlugin(plugins.SingletonPlugin):
@@ -13,6 +15,7 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IBlueprint)
     plugins.implements(plugins.IActions)
     plugins.implements(IAuthorizationBindings)
+    plugins.implements(IResourceDownloadHandler, inherit=True)
 
     # IConfigurer
 
@@ -48,3 +51,8 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
         """
         authorizer.register_type_alias('obj', 'res')
         authorizer.register_action_alias('write', 'update', 'res')
+
+    # IResourceDownloadHandler
+
+    def resource_download(self, resource, package, filename=None):
+        return download_handler(resource, package, filename)
