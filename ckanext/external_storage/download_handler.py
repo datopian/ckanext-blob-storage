@@ -1,6 +1,5 @@
-from ckan import model
+from ckan import model, plugins
 from ckan.lib import uploader
-from ckan import plugins
 from ckan.plugins import toolkit as tk
 from flask import send_file
 
