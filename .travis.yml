@@ -19,6 +19,10 @@ env:
   - CKANVERSION=master
   - CKANVERSION=2.8
 
+before_install:
+  - docker pull ckan/solr
+  - docker run -d -p 8983:8983 -e CKAN_SOLR_PASSWORD=ckan ckan/solr
+
 install:
   - bash bin/travis-build.bash
   - pip install coveralls
