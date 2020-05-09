@@ -10,16 +10,18 @@ def resource_storage_prefix(package_name, org_name=None):
     """Get the resource storage prefix for a package name
     """
     if org_name is None:
+        context = {'ignore_auth': True}
         try:
-            context = {'ignore_auth': True}
             data_dict = {'id': package_name}
             package = toolkit.get_action('package_show')(context, data_dict)
         except toolkit.ObjectNotFound:
             return ''
 
-        org_name = package.get('organization', {}).get('name')
-        if not org_name:
-            org = package.get('owner_org', {})
+        org = package.get('organization')
+        if not org and package.get('owner_org'):
+            org = toolkit.get_action('organization_show')(context, {"id": package['owner_org']})
+
+        if org:
             org_name = org.get('name')
 
     if not org_name:
