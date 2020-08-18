@@ -4,13 +4,6 @@ services:
   - postgresql
   - redis
 
-# use an older trusty image, because the newer images cause build errors with
-# psycopg2 that comes with CKAN<2.8:
-#   "Error: could not determine PostgreSQL version from '10.1'"
-# see https://github.com/travis-ci/travis-ci/issues/8897
-dist: trusty
-group: deprecated-2017Q4
-
 python:
   - 2.7
   - 3.6
