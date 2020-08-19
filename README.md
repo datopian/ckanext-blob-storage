@@ -5,7 +5,7 @@ ckanext-external-storage
 
 **Move CKAN resource storage management to an external micro-service**
 
-`ckanext-external-storage` replace's CKAN's data storage functionality 
+`ckanext-external-storage` replace's CKAN's data storage functionality
 with an external micro-service deployed separately of CKAN. This stand-alone
 micro-service is responsible for authorizing access to storage backends,
 which could in turn be local, cloud based (e.g. S3, Azure Blobs, GCP, etc.)
@@ -14,20 +14,20 @@ browsers) to upload and download files directly to storage without passing
 them through CKAN, which can greatly improve file access efficiency.
 
 Authentication and authorization to the external storage management service
-is done via JWT tokens provided by 
+is done via JWT tokens provided by
 [`ckanext-authz-service`](https://github.com/datopian/ckanext-authz-service).
 
 Internally, the external storage management service is in fact a Git LFS server
-implementation, which means access via 3rd party Git based tools is also 
-potentially possible. 
+implementation, which means access via 3rd party Git based tools is also
+potentially possible.
 
 Requirements
 ------------
-* This extension works with CKAN 2.8.x. It may work, but has not been tested, 
+* This extension works with CKAN 2.8.x. It may work, but has not been tested,
 with other CKAN versions.
 * `ckanext-authz-service` must be installed and enabled
-* A working and configured Git LFS server accessible to the browser. We 
-recommend usign [Giftless](https://github.com/datopian/giftless) but other 
+* A working and configured Git LFS server accessible to the browser. We
+recommend usign [Giftless](https://github.com/datopian/giftless) but other
 implementations may be configured to work as well.
 
 Installation
@@ -60,7 +60,7 @@ Configuration settings
 `ckanext.external_storage.storage_service_url = 'https://...'`
 
 Set the URL of the external storage microservice (the Git LFS server). This
-must be a URL accessible to browsers connecting to the service. 
+must be a URL accessible to browsers connecting to the service.
 
 
 Developer installation
@@ -70,8 +70,8 @@ To install `ckanext-external-storage` for development, do the following:
 
 1. Pull the project code from Github
 ```
-git clone https://github.com/datopian/ckanext-external-storage.git 
-cd ckanext-external-storage 
+git clone https://github.com/datopian/ckanext-external-storage.git
+cd ckanext-external-storage
 ```
 2. Create a Python 2.7 virtual environment
 ```
@@ -98,84 +98,115 @@ This will pull and install CKAN and all it's dependencies into your virtual
 environment, create all necessary configuration files, launch external services
 using Docker Compose and start the CKAN development server.
 
-You can repeat the last command at any time to start developing again. 
+You can repeat the last command at any time to start developing again.
 
 Type `make help` to get a like of user commands useful to managing the local
-environment. 
+environment.
+
+Installing with Docker
+----------------------
+
+Unlike other CKAN extensions, external storage needs node modules to be installed
+and build in order to work properly. You will need to install node and npm.
+Below is how your Dockerfile might look like
+
+```
+RUN apt-get -q -y install \
+        python-pip \
+        curl \
+        git-core
+
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - && apt-get install nodejs && npm version
+
+# Install ckanext-external-storage
+RUN git clone --branch ${CKANEXT_EXTERNAL_STORAGE_VERSION} https://github.com/datopian/ckanext-external-storage
+RUN pip install --no-cache-dir -r "ckanext-external-storage/requirements.py2.txt"
+RUN pip install -e ckanext-external-storage
+
+# Install node modules and build the bundle
+RUN cd ckanext-external-storage && npm install && npm run build && cd -
+
+# Install other extensions
+...
+```
+
+__NOTE:__ We assume that you have Giftless server running with configuration as
+in [giftless.yaml][giftless] and nginx is configured as in [nginx.conf][nginx]
+
 
 
 ### Working with `requirements.txt` files
 
 #### tl;dr
 
-* You *do not* touch `*requirements.*.txt` files directly. We use 
-[`pip-tools`][1] and custom `make` targets to manage these files. 
-* Use `make develop` to install the right development time requirements into your 
+* You *do not* touch `*requirements.*.txt` files directly. We use
+[`pip-tools`][1] and custom `make` targets to manage these files.
+* Use `make develop` to install the right development time requirements into your
 current virtual environment
 * Use `make install` to install the right runtime requirements into your current
 virtual environment
 * To add requirements, edit `requirements.in` or `dev-requirements.in` and run
-`make requirements`. This will recompile the requirements file(s) **for your 
+`make requirements`. This will recompile the requirements file(s) **for your
 current Python version**. You may need to do this for the other Python version
-by switching to a different Python virtual environment before committing your 
-changes. 
- 
+by switching to a different Python virtual environment before committing your
+changes.
+
 #### More background
-This project manages requirements in a relatively complex way, in order to 
+This project manages requirements in a relatively complex way, in order to
 seamlessly support Python 2.7 and 3.x.
 
 For this reason, you will see 4 requirements files in the project root:
 
-* `requirements.py2.txt` - Python 2 runtime requirements 
-* `requirements.py3.txt` - Python 3 runtime requirements 
+* `requirements.py2.txt` - Python 2 runtime requirements
+* `requirements.py3.txt` - Python 3 runtime requirements
 * `dev-requirements.py2.txt` - Python 2 development requirements
 * `dev-requirements.py3.txt` - Python 3 development requirements
 
 These are generated using the `pip-compile` command (a part of `pip-tools`)
-from the corresponding `requirements.in` and `dev-requirements.in` files. 
+from the corresponding `requirements.in` and `dev-requirements.in` files.
 
-To understand why `pip-compile` is used, read the `pip-tools` manual. In 
-short, this allows us to pin dependencies of dependencies, thus resolving 
+To understand why `pip-compile` is used, read the `pip-tools` manual. In
+short, this allows us to pin dependencies of dependencies, thus resolving
 potential deployment conflicts, without the headache of managing the specific
-version of each Nth-level dependency. 
+version of each Nth-level dependency.
 
 In order to support both Python 2.7 and 3.x, which tend to require slightly
-different dependencies, we use `requirements.in` files to generate 
+different dependencies, we use `requirements.in` files to generate
 major-version specific requirements files. These, in turn, should be used
-when installing the package. 
+when installing the package.
 
 In order to simplify things, the `make` targets specified above will automate
-the process *for the current Python version*. 
+the process *for the current Python version*.
 
 #### Adding Requirements
 
 Requirements are managed in `.in` files - these are the only files that
-should be edited directly. 
+should be edited directly.
 
 Take care to specify a version for each requirement, to the level required
-to maintain future compatibility, but not to specify an *exact* version 
-unless necessary. 
+to maintain future compatibility, but not to specify an *exact* version
+unless necessary.
 
 For example, the following are good `requirements.in` lines:
 
     pyjwt[crypto]==1.7.*
     pyyaml==5.*
     pytz
-    
+
 This allows these packages to be upgraded to a minor version, without the risk
-of breaking compatibility. 
+of breaking compatibility.
 
 Note that `pytz` is specified with no version on purpose, as we want it updated
-to the latest possible version on each new rebuild. 
+to the latest possible version on each new rebuild.
 
 Developers wanting to add new requirements (runtime or development time),
 should take special care to update the `requirements.txt` files for all
 supported Python versions by running `make requirements` on different
-virtual environment, after updating the relevant `.in` file. 
+virtual environment, after updating the relevant `.in` file.
 
 #### Applying Patch-level upgrades to requirements
 
-You can delete `*requirements.*.txt` and run `make requirements`. 
+You can delete `*requirements.*.txt` and run `make requirements`.
 
 TODO: we can probably do this in a better way - create a `make` target
 for this.  
@@ -200,7 +231,7 @@ ckanext-external-storage should be available on PyPI as https://pypi.org/project
 To publish a new version to PyPI follow these steps:
 
 1. Update the version number in the `setup.py` file.
-   See [PEP 440](http://legacy.python.org/dev/peps/pep-0440/#public-version-identifiers) 
+   See [PEP 440](http://legacy.python.org/dev/peps/pep-0440/#public-version-identifiers)
    for how to choose version numbers.
 
 2. Make sure you have the latest version of necessary packages:
@@ -235,3 +266,5 @@ To publish a new version to PyPI follow these steps:
 
 
 [1]: https://pypi.org/project/pip-tools/
+[giftless]: docker/giftless.yaml
+[nginx]: docker/nginx.conf
