@@ -3,6 +3,8 @@ from setuptools import setup, find_packages  # Always prefer setuptools over dis
 from codecs import open  # To use a consistent encoding
 from os import path
 
+import ckanext.external_storage
+
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the relevant file
@@ -15,7 +17,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # http://packaging.python.org/en/latest/tutorial.html#version
-    version='0.1.0',
+    version=ckanext.external_storage.__version__,
 
     description='''Store CKAN data files using an external Git LFS based storage microservice''',
     long_description=long_description,
