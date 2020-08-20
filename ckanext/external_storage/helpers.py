@@ -4,6 +4,8 @@ from typing import Optional
 
 import ckan.plugins.toolkit as toolkit
 
+SERVER_URL_CONF_KEY = 'ckanext.external_storage.storage_service_url'
+
 
 def resource_storage_prefix(package_name, org_name=None):
     # type: (str) -> str
@@ -43,7 +45,10 @@ def server_url():
     # type: () -> Optional[str]
     """Get the configured server URL
     """
-    url = toolkit.config.get('ckanext.external_storage.storage_service_url')
-    if url and url[-1] == '/':
+    url = toolkit.config.get(SERVER_URL_CONF_KEY)
+    if not url:
+        raise ValueError("Configuration option '{}' is not set".format(
+            SERVER_URL_CONF_KEY))
+    if url[-1] == '/':
         url = url[0:-1]
     return url
