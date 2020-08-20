@@ -19,7 +19,7 @@ def get_resource_download_spec(context, data_dict):
         if k not in resource:
             return {}
 
-    client = LfsClient(helpers.server_url(), _get_authz_token(context, resource))
+    client = get_lfs_client(context, resource)
     object = _get_resource_download_lfs_objects(client, resource['lfs_prefix'], [resource])[0]
     assert object['oid'] == resource['sha256']
     assert object['size'] == resource['size']
@@ -29,6 +29,13 @@ def get_resource_download_spec(context, data_dict):
                                                                     object['error'].get('code', 'unknown')))
 
     return object['actions']['download']
+
+
+def get_lfs_client(context, resource):
+    """Get an LFS client object; This is a poor man's DI solution
+    that allows injecting an LFS client object via the CKAN context
+    """
+    return context.get('lfs_client', LfsClient(helpers.server_url(), _get_authz_token(context, resource)))
 
 
 def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
