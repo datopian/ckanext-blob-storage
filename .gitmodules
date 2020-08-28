@@ -1,0 +1,3 @@
+[submodule "datapub"]
+	path = datapub
+	url = git@github.com:datopian/datapub.git
