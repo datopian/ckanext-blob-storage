@@ -52,3 +52,26 @@ def server_url():
     if url[-1] == '/':
         url = url[0:-1]
     return url
+
+def lfs_url():
+    return toolkit.config.get('ckanext.external_storage.storage_service_url')
+
+def organization_name(package_name=None):
+    if package_name:
+        context = {'ignore_auth': True}
+        try:
+            data_dict = {'id': package_name}
+            package = toolkit.get_action('package_show')(context, data_dict)
+        except toolkit.ObjectNotFound:
+            return ''
+
+        org = package.get('organization')
+        if not org and package.get('owner_org'):
+            org = toolkit.get_action('organization_show')(context, {'id': package['owner_org']})
+
+        if org:
+            return org.get('name')
+        else:
+            return '_'
+    else:
+        return '_'
