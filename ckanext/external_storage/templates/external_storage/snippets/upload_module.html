@@ -4,5 +4,10 @@
 {% resource 'external-storage/js/2.e52249ed.chunk.js' %}
 {% resource 'external-storage/js/main.8f511c64.chunk.js' %}
 
-
-<div id="root"></div>
+<div id="ResourceEditor"
+     data-dataset-id="{{ pkg_name }}"
+     data-api="{{ base_url }}"
+     data-lfs="{{ h.extstorage_lfs_url() }}"
+     data-auth-token="{{ api_key }}"
+     data-organization-id="{{ h.extstorage_organization_name(pkg_name) }}">
+</div>
