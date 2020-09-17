@@ -19,7 +19,7 @@
   "homepage": "https://github.com/datopian/ckanext-external-storage#readme",
   "dependencies": {
     "axios": "^0.19.2",
-    "ckan3-js-sdk": "github:datopian/ckan3-js-sdk#5bc3f16e75dd21b580b8ee68b215148cb1822cb4",
+    "ckan3-js-sdk": "github:datopian/ckan3-js-sdk#69b6e097b294534579aa410e0e99554715537635",
     "crypto-js": "^4.0.0",
     "express": "^4.17.1",
     "form-data": "^3.0.0"
