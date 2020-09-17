@@ -53,8 +53,10 @@ def server_url():
         url = url[0:-1]
     return url
 
+
 def lfs_url():
     return toolkit.config.get('ckanext.external_storage.storage_service_url')
+
 
 def organization_name(package_name=None):
     if package_name:
