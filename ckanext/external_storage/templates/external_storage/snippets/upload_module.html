@@ -1,11 +1,13 @@
-{% resource 'external-storage/js/upload.js' %}
-{% resource 'external-storage/js/dist/index.js' %}
+{% resource 'external-storage/css/main.2a5e9524.chunk.css' %}
 
-<div data-module="external-storage-upload"
-     data-module-package-id="{{ pkg_name }}"
-     data-module-server-url="{{ h.extstorage_server_url() }}"
-     data-module-storage-prefix="{{ h.extstorage_resource_storage_prefix(pkg_name) }}"
-     data-module-authz-scope="{{ h.extstorage_resource_authz_scope(pkg_name) }}"
->
-    {{ parent() }}
+{% resource 'external-storage/js/runtime-main.c155da57.js' %}
+{% resource 'external-storage/js/2.418d957d.chunk.js' %}
+{% resource 'external-storage/js/main.b6739752.chunk.js' %}
+
+<div id="ResourceEditor"
+     data-dataset-id="{{ pkg_name }}"
+     data-api="{{ base_url }}"
+     data-lfs="{{ h.extstorage_lfs_url() }}"
+     data-auth-token="{{ api_key }}"
+     data-organization-id="{{ h.extstorage_organization_name(pkg_name) }}">
 </div>

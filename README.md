@@ -79,17 +79,7 @@ virtualenv .venv27
 source .venv27/bin/activate
 ```
 
-3. Install client-side dependencies
-```
-npm install
-```
-
-4. Generate a bundle of all client-side dependencies
-```
-npm run build
-```
-
-5. Run the following command to bootstrap the entire environment
+3. Run the following command to bootstrap the entire environment
 ```
 make dev-start
 ```
@@ -102,6 +92,45 @@ You can repeat the last command at any time to start developing again.
 
 Type `make help` to get a like of user commands useful to managing the local
 environment.
+
+Update DataPub (resource editor) app
+------------------------------------
+
+1. Init submodule for the resource editor app
+```
+git submodule init
+git submodule update
+```
+
+2. Build the resource editor app
+```
+cd datapub
+yarn
+yarn build
+```
+
+3. Replace bundles in `fanstatic` directory
+```
+rm ckanext/external_storage/fanstatic/js/*
+cp datapub/build/static/js/*.js ckanext/external_storage/fanstatic/js/
+```
+
+If you also want to re-use stylesheets:
+
+```
+rm ckanext/external_storage/fanstatic/css/*
+cp datapub/build/static/css/*.css ckanext/external_storage/fanstatic/css/
+```
+
+4. Now, make sure to update the resources in `templates/external_storage/snippets/upload_module.html`
+
+```
+{% resource 'external-storage/css/main.{hash}.chunk.css' %}
+
+{% resource 'external-storage/js/runtime-main.{hash}.js' %}
+{% resource 'external-storage/js/2.{hash}.chunk.js' %}
+{% resource 'external-storage/js/main.{hash}.chunk.js' %}
+```
 
 Installing with Docker
 ----------------------
@@ -122,9 +151,6 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - && apt-get install n
 RUN git clone --branch ${CKANEXT_EXTERNAL_STORAGE_VERSION} https://github.com/datopian/ckanext-external-storage
 RUN pip install --no-cache-dir -r "ckanext-external-storage/requirements.py2.txt"
 RUN pip install -e ckanext-external-storage
-
-# Install node modules and build the bundle
-RUN cd ckanext-external-storage && npm install && npm run build && cd -
 
 # Install other extensions
 ...
