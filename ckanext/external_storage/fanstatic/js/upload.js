@@ -64,12 +64,11 @@ ckan.module("external-storage-upload", function ($) {
     _saveResource: function () {
       var scopes = [this.options.authzScope];
       var self = this;
-      
+
       this._generateAuthToken(scopes)
         .then(this._uploadFileToStorage)
         .then(this._updateResourceMetadata)
         .then(function (resourceData) {
-          console.log(resourceData);
           self._setSaveDisabled(false);
 
           if (resourceData.package_id && resourceData.id){
@@ -87,7 +86,7 @@ ckan.module("external-storage-upload", function ($) {
           }
         })
         .then(function (redirectUrl) {
-          
+
           // Use form.submit() to avoid being asked if we want to leave the page
           self._form.attr('action', redirectUrl);
           self._form.attr('method', 'GET');
@@ -107,14 +106,13 @@ ckan.module("external-storage-upload", function ($) {
         'POST',
         'package_patch',
         {
-          "id": packageId, 
+          "id": packageId,
           "state": "active"
         },
         function (data) {
           if (data.success) {
             dfd.resolve(data.result);
           } else {
-            console.log(data);
             dfd.reject("Failed to update dataset state to 'active'");
           }
         },
@@ -154,7 +152,6 @@ ckan.module("external-storage-upload", function ($) {
           if (data.success) {
             dfd.resolve(data.result);
           } else {
-            console.log(data);
             dfd.reject("Failed to save resource");
           }
         },
