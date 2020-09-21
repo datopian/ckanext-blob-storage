@@ -1,20 +1,15 @@
-ckanext-external-storage
+ckanext-blob-storage
 ========================
-[![Build Status](https://travis-ci.org/datopian/ckanext-external-storage.svg?branch=master)](https://travis-ci.org/datopian/ckanext-external-storage)
-[![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-external-storage/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-external-storage?branch=master)
+[![Build Status](https://travis-ci.org/datopian/ckanext-blob-storage.svg?branch=master)](https://travis-ci.org/datopian/ckanext-blob-storage)
+[![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-blob-storage/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-blob-storage?branch=master)
 
 **Move CKAN resource storage management to an external micro-service**
 
-`ckanext-external-storage` replace's CKAN's data storage functionality
-with an external micro-service deployed separately of CKAN. This stand-alone
-micro-service is responsible for authorizing access to storage backends,
-which could in turn be local, cloud based (e.g. S3, Azure Blobs, GCP, etc.)
-or any other storage. In addition, the service allows clients (typically
-browsers) to upload and download files directly to storage without passing
-them through CKAN, which can greatly improve file access efficiency.
+`ckanext-blob-storage` replace's CKAN's default local blob storage functionality with pluggable storage layer supporting cloud and local. It supports direct to cloud file uploading following the design in https://tech.datopian.com/blob-storage/#ckan-v3
 
-Authentication and authorization to the external storage management service
-is done via JWT tokens provided by
+The design is pluggable so one can use all the major storage backends as well as local, cloud based (e.g. S3, Azure Blobs, GCP, etc.) or any other storage. In addition, the service allows clients (typically browsers) to upload and download files directly to storage without passing them through CKAN, which can greatly improve file access efficiency.
+
+Authentication and authorization to the external storage management service is done via JWT tokens provided by
 [`ckanext-authz-service`](https://github.com/datopian/ckanext-authz-service).
 
 Internally, the external storage management service is in fact a Git LFS server
