@@ -1,5 +1,6 @@
 """External Storage API actions
 """
+import ast
 from os import path
 from typing import Any, Dict
 
@@ -29,6 +30,34 @@ def get_resource_download_spec(context, data_dict):
                                                                     object['error'].get('code', 'unknown')))
 
     return object['actions']['download']
+
+
+@toolkit.side_effect_free
+def resource_schema_show(context, data_dict):
+    """Get a resource schema as a dictionary instead of string
+    """
+    resource = _get_resource(context, data_dict)
+
+    if resource.get('schema', False):
+        try:
+            return ast.literal_eval(resource['schema'])
+        except ValueError:
+            return resource['schema']
+    return {}
+
+
+@toolkit.side_effect_free
+def resource_sample_show(context, data_dict):
+    """Get a resource sample as a list of dictionaries instead of string
+    """
+    resource = _get_resource(context, data_dict)
+
+    if resource.get('sample', False):
+        try:
+            return ast.literal_eval(resource['sample'])
+        except ValueError:
+            return resource['sample']
+    return {}
 
 
 def get_lfs_client(context, resource):
