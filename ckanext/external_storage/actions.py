@@ -2,6 +2,7 @@
 """
 from os import path
 from typing import Any, Dict
+import ast
 
 from ckan.plugins import toolkit
 from six.moves.urllib.parse import urlparse
@@ -29,6 +30,26 @@ def get_resource_download_spec(context, data_dict):
                                                                     object['error'].get('code', 'unknown')))
 
     return object['actions']['download']
+
+
+@toolkit.side_effect_free
+def resource_schema_show(context, data_dict):
+    """Get a resource schema as a dictionary instead of string
+    """
+    resource = _get_resource(context, data_dict)
+    if resource.get('schema', False):
+        return ast.literal_eval(resource['schema'])
+    return {}
+
+
+@toolkit.side_effect_free
+def resource_sample_show(context, data_dict):
+    """Get a resource sample as a list of dictionaries instead of string
+    """
+    resource = _get_resource(context, data_dict)
+    if resource.get('sample', False):
+        return ast.literal_eval(resource['sample'])
+    return []
 
 
 def get_lfs_client(context, resource):

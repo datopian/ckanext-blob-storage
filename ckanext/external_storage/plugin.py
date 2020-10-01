@@ -41,7 +41,11 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
     # IActions
 
     def get_actions(self):
-        return {'get_resource_download_spec': actions.get_resource_download_spec}
+        return {
+            'get_resource_download_spec': actions.get_resource_download_spec,
+            'resource_schema_show': actions.resource_schema_show,
+            'resource_sample_show': actions.resource_sample_show
+        }
 
     # IAuthorizationBindings
 
