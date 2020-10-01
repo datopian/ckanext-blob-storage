@@ -37,11 +37,11 @@ def resource_schema_show(context, data_dict):
     """Get a resource schema as a dictionary instead of string
     """
     resource = _get_resource(context, data_dict)
-    
+
     if resource.get('schema', False):
         try:
             return ast.literal_eval(resource['schema'])
-        except:
+        except ValueError:
             return resource['schema']
     return {}
 
@@ -55,7 +55,7 @@ def resource_sample_show(context, data_dict):
     if resource.get('sample', False):
         try:
             return ast.literal_eval(resource['sample'])
-        except:
+        except ValueError:
             return resource['sample']
     return {}
 
