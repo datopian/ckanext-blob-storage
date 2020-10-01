@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from typing import Any, Dict
 
-from ckan import model
+from ckan import model as core_model
 from ckan.tests import helpers
 from mock import patch
 
@@ -11,6 +11,16 @@ class FunctionalTestBase(helpers.FunctionalTestBase):
     _load_plugins = ['external_storage']
 
 
+def get_context(user):
+    userobj = core_model.User.get(user['name'])
+    return {
+        'model': core_model,
+        'user': user['name'],
+        "auth_user_obj": userobj,
+        'ignore_auth': False
+    }
+
+
 @contextmanager
 def user_context(user):
     # type: (Dict[str, Any]) -> Dict[str, Any]
@@ -18,8 +28,8 @@ def user_context(user):
     both patches our `get_user_context` function to return it and also
     yields the context for use inside tests
     """
-    userobj = model.User.get(user['name'])
-    context = {"model": model,
+    userobj = core_model.User.get(user['name'])
+    context = {"model": core_model,
                "user": user['name'],
                "auth_user_obj": userobj,
                "userobj": userobj}
