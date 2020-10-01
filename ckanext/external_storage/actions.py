@@ -37,8 +37,12 @@ def resource_schema_show(context, data_dict):
     """Get a resource schema as a dictionary instead of string
     """
     resource = _get_resource(context, data_dict)
+    
     if resource.get('schema', False):
-        return ast.literal_eval(resource['schema'])
+        try:
+            return ast.literal_eval(resource['schema'])
+        except:
+            return resource['schema']
     return {}
 
 
@@ -47,9 +51,13 @@ def resource_sample_show(context, data_dict):
     """Get a resource sample as a list of dictionaries instead of string
     """
     resource = _get_resource(context, data_dict)
+
     if resource.get('sample', False):
-        return ast.literal_eval(resource['sample'])
-    return []
+        try:
+            return ast.literal_eval(resource['sample'])
+        except:
+            return resource['sample']
+    return {}
 
 
 def get_lfs_client(context, resource):
