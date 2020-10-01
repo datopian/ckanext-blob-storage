@@ -83,6 +83,12 @@ This will pull and install CKAN and all it's dependencies into your virtual
 environment, create all necessary configuration files, launch external services
 using Docker Compose and start the CKAN development server.
 
+You can create an user using the web interface at [`localhost:5000`](http://localhost:5000/) but the user will not be an _admin_ with permissions to create organizations or datasets. If you need to turn your user in an _admin_, make sure the virtual environment is still active and use this command, replacing the `<USERNAME>` with the user name you created:
+
+```
+paster --plugin=ckan sysadmin -c ckan/development.ini add <USERNAME>
+```
+
 You can repeat the last command at any time to start developing again.
 
 Type `make help` to get a like of user commands useful to managing the local
