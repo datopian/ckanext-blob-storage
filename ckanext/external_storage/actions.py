@@ -1,8 +1,8 @@
 """External Storage API actions
 """
+import ast
 from os import path
 from typing import Any, Dict
-import ast
 
 from ckan.plugins import toolkit
 from six.moves.urllib.parse import urlparse
