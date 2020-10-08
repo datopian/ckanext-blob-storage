@@ -89,22 +89,10 @@ You can create an user using the web interface at [`localhost:5000`](http://loca
 paster --plugin=ckan sysadmin -c ckan/development.ini add <USERNAME>
 ```
 
-The way Giftless is designed makes it required to add an extra configuration in `docker/giftless.yaml` **if running with local storage**. Add the `- giftless.auth.allow_anon:read_only` bit (there is no space between after `:` — it is a string, not a key/value pair) at the bottom of `AUTH_PROVIDERS`, making your file look like this:
+You can repeat the last command at any time to start developing again.
 
-```yaml
-# …
-AUTH_PROVIDERS:
-  - factory: giftless.auth.jwt:factory
-    options:
-      algorithm: HS256
-      private_key: this-is-a-test-only-key
-  - giftless.auth.allow_anon:read_only
-# …
-```
-
-You can repeat the `make dev-start` at any time to start developing again.
-
-Type `make help` to get a like of user commands useful to managing the local environment.
+Type `make help` to get a like of user commands useful to managing the local
+environment.
 
 Update DataPub (resource editor) app
 ------------------------------------
