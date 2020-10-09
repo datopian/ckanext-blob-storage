@@ -6,6 +6,7 @@ AUTH_PROVIDERS:
     options:
       algorithm: HS256
       private_key: this-is-a-test-only-key
+  - giftless.auth.allow_anon:read_only
 
 # In a local environment we'll use the default storage adapter
 TRANSFER_ADAPTERS: {}
