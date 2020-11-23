@@ -1,6 +1,6 @@
 """Template helpers for ckanext-external-storage
 """
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import ckan.plugins.toolkit as toolkit
 
@@ -8,7 +8,7 @@ SERVER_URL_CONF_KEY = 'ckanext.external_storage.storage_service_url'
 
 
 def resource_storage_prefix(package_name, org_name=None):
-    # type: (str) -> str
+    # type: (str, Optional[str]) -> str
     """Get the resource storage prefix for a package name
     """
     if org_name is None:
@@ -66,14 +66,21 @@ def organization_name(package_name=None):
             package = toolkit.get_action('package_show')(context, data_dict)
         except toolkit.ObjectNotFound:
             return ''
+        org_name = organization_name_for_package(package)
+        if org_name:
+            return org_name
 
-        org = package.get('organization')
-        if not org and package.get('owner_org'):
-            org = toolkit.get_action('organization_show')(context, {'id': package['owner_org']})
+    return '_'
 
-        if org:
-            return org.get('name')
-        else:
-            return '_'
-    else:
-        return '_'
+
+def organization_name_for_package(package):
+    # type: (Dict[str, Any]) -> Optional[str]
+    """Get the organization name for a known, fetched package dict
+    """
+    context = {'ignore_auth': True}
+    org = package.get('organization')
+    if not org and package.get('owner_org'):
+        org = toolkit.get_action('organization_show')(context, {'id': package['owner_org']})
+    if org:
+        return org.get('name')
+    return None

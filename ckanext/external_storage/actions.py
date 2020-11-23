@@ -64,7 +64,7 @@ def get_lfs_client(context, resource):
     """Get an LFS client object; This is a poor man's DI solution
     that allows injecting an LFS client object via the CKAN context
     """
-    return context.get('lfs_client', LfsClient(helpers.server_url(), _get_authz_token(context, resource)))
+    return context.get('lfs_client', LfsClient(helpers.server_url(), get_authz_token(context, resource)))
 
 
 def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
@@ -88,7 +88,7 @@ def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
     return batch_response['objects']
 
 
-def _get_authz_token(context, resource):
+def get_authz_token(context, resource):
     # type: (Dict[str, Any], Dict[str, Any]) -> str
     """Get an authorization token for getting the URL from LFS
     """
