@@ -5,10 +5,11 @@ from os import path
 from typing import Any, Dict
 
 from ckan.plugins import toolkit
+from giftless_client import LfsClient
+from giftless_client.exc import LfsError
 from six.moves.urllib.parse import urlparse
 
 from . import helpers
-from .lfs_client import LfsClient, LfsError
 
 
 @toolkit.side_effect_free
