@@ -1,6 +1,9 @@
 """Template helpers for ckanext-external-storage
 """
+from os import path
 from typing import Any, Dict, Optional
+
+from six.moves.urllib.parse import urlparse
 
 import ckan.plugins.toolkit as toolkit
 
@@ -33,7 +36,7 @@ def resource_storage_prefix(package_name, org_name=None):
 
 
 def resource_authz_scope(package_name, actions=None, org_name=None):
-    # type: (str, Optional[str]) -> str
+    # type: (str, Optional[str], Optional[str]) -> str
     """Get the authorization scope for package resources
     """
     if actions is None:
@@ -52,10 +55,6 @@ def server_url():
     if url[-1] == '/':
         url = url[0:-1]
     return url
-
-
-def lfs_url():
-    return toolkit.config.get('ckanext.external_storage.storage_service_url')
 
 
 def organization_name(package_name=None):
@@ -84,3 +83,15 @@ def organization_name_for_package(package):
     if org:
         return org.get('name')
     return None
+
+
+def resource_filename(resource):
+    """Get original file name from resource
+    """
+    if 'url' not in resource:
+        return resource['name']
+
+    if resource['url'][0:6] in {'http:/', 'https:'}:
+        url_path = urlparse(resource['url']).path
+        return path.basename(url_path)
+    return resource['url']

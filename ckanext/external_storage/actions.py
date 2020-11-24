@@ -1,13 +1,11 @@
 """External Storage API actions
 """
 import ast
-from os import path
 from typing import Any, Dict
 
 from ckan.plugins import toolkit
 from giftless_client import LfsClient
 from giftless_client.exc import LfsError
-from six.moves.urllib.parse import urlparse
 
 from . import helpers
 
@@ -73,7 +71,7 @@ def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
     """
     objects = [{"oid": r['sha256'],
                 "size": r['size'],
-                "x-filename": _get_filename(r)} for r in resources]
+                "x-filename": helpers.resource_filename(r)} for r in resources]
     try:
         batch_response = client.batch(lfs_prefix, 'download', objects)
     except LfsError as e:
@@ -116,15 +114,3 @@ def _get_resource(context, data_dict):
     if 'resource' in data_dict:
         return data_dict['resource']
     return toolkit.get_action('resource_show')(context, {'id': data_dict['id']})
-
-
-def _get_filename(resource):
-    """Get original file name from resource
-    """
-    if 'url' not in resource:
-        return resource['name']
-
-    if resource['url'][0:6] in {'http:/', 'https:'}:
-        url_path = urlparse(resource['url']).path
-        return path.basename(url_path)
-    return resource['url']
