@@ -226,6 +226,7 @@ $(SENTINELS)/tests-passed: $(SENTINELS)/test-setup $(shell find $(PACKAGE_DIR) -
 		--isort \
 		--ckan-ini=$(TEST_INI_PATH) \
 		--doctest-modules \
+		--ignore $(PACKAGE_DIR)/cli.py  \
 		$(PACKAGE_DIR)
 	@touch $@
 
