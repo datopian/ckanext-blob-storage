@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import time
 from contextlib import contextmanager
+from datetime import datetime
 
 from typing import Any, Dict, Generator, Tuple
 
@@ -231,7 +232,7 @@ def get_unmigrated_resources():
     _log().info("There are ~%d resources left to migrate", resources.count())
 
     resources = resources.with_for_update(skip_locked=True).order_by(Resource.created)
-    last_resource_created = 0
+    last_resource_created = datetime.fromtimestamp(0)
     while True:
         with db_transaction(session):
             # We are going to use 'created' under the assumption that creation time is unique
