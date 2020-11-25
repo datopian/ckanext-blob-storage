@@ -227,6 +227,7 @@ def get_unmigrated_resources():
     session.revisioning_disabled = True
     resources = session.query(Resource).filter(
         Resource.url_type == 'upload',
+        Resource.state != 'deleted',
         or_(Resource.extras.notlike('%"lfs_prefix":%'), Resource.extras == None)  # noqa: E711
     )
     _log().info("There are ~%d resources left to migrate", resources.count())
