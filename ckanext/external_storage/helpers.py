@@ -3,9 +3,8 @@
 from os import path
 from typing import Any, Dict, Optional
 
-from six.moves.urllib.parse import urlparse
-
 import ckan.plugins.toolkit as toolkit
+from six.moves.urllib.parse import urlparse
 
 SERVER_URL_CONF_KEY = 'ckanext.external_storage.storage_service_url'
 

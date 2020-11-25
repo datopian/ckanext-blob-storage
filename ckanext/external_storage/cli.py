@@ -7,20 +7,20 @@ from contextlib import contextmanager
 from typing import Any, Dict, Generator, Tuple
 
 import requests
-from ckan.model import Resource, Session, User
 from ckan.lib.cli import CkanCommand
 from ckan.lib.helpers import _get_auto_flask_context  # noqa  we need this for Flask request context
+from ckan.model import Resource, Session, User
 from ckan.plugins import toolkit
 from flask import Response
 from giftless_client import LfsClient
 from giftless_client.types import ObjectAttributes
-from six import string_types, binary_type
+from six import binary_type, string_types
 from sqlalchemy import or_
 from sqlalchemy.orm.attributes import flag_modified
+from werkzeug.wsgi import FileWrapper
 
 from ckanext.external_storage import helpers
 from ckanext.external_storage.download_handler import call_download_handlers
-from werkzeug.wsgi import FileWrapper
 
 
 def _log():
@@ -187,8 +187,8 @@ def _save_redirected_response_data(response, file_name):
     with requests.get(resource_url, stream=True) as source, open(file_name, 'wb') as dest:
         source.raise_for_status()
         _log().debug("Resource downloading, HTTP status code is %d, Content-type is %s",
-                  source.status_code,
-                  source.headers.get('Content-type', 'unknown'))
+                     source.status_code,
+                     source.headers.get('Content-type', 'unknown'))
         for chunk in source.iter_content(chunk_size=1024 * 16):
             dest.write(chunk)
     _log().debug("Remote resource downloaded to %s", file_name)
@@ -219,8 +219,10 @@ def get_unmigrated_resources():
     """
     session = Session()
     session.revisioning_disabled = True
-    resources = session.query(Resource).filter(Resource.url_type == 'upload',
-                                               or_(Resource.extras.notlike('%"lfs_prefix":%'), Resource.extras == None))
+    resources = session.query(Resource).filter(
+        Resource.url_type == 'upload',
+        or_(Resource.extras.notlike('%"lfs_prefix":%'), Resource.extras == None)  # noqa: E711
+    )
     _log().info("There are ~%d resources left to migrate", resources.count())
 
     while True:
