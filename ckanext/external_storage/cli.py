@@ -64,6 +64,7 @@ class MigrateResourcesCommand(CkanCommand):
                 failed += 1
                 if failed >= self._max_failures:
                     _log().error("Skipping resource after %d failures", failed)
+                    failed = 0
                     continue
                 time.sleep(self._retry_delay)
 
@@ -230,15 +231,12 @@ def get_unmigrated_resources():
     _log().info("There are ~%d resources left to migrate", resources.count())
 
     resources = resources.with_for_update(skip_locked=True).order_by(Resource.created)
-    last_resource = None
+    last_resource_created = 0
     while True:
         with db_transaction(session):
             # We are going to use 'created' under the assumption that creation time is unique
             # This is used to skip resources which have failed migration
-            if last_resource:
-                resources.filter(Resource.created > last_resource.created)
-
-            resource = resources.first()
+            resource = resources.filter(Resource.created > last_resource_created).first()
             if resource is None:
                 break  # We are done here
 
@@ -247,7 +245,7 @@ def get_unmigrated_resources():
                 continue
 
             yield resource
-            last_resource = resource
+            last_resource_created = resource.created
 
 
 def _was_migrated(resource):
