@@ -23,6 +23,10 @@ SENTINELS := .make-status
 
 PYTHON_VERSION := $(shell $(PYTHON) -c 'import sys; print(sys.version_info[0])')
 
+PACKAGE_TAG_PREFIX := "v"
+PACKAGE_TAG_SUFFIX := ""
+PACKAGE_VERSION := $(shell $(PYTHON) -c 'import $(PACKAGE_NAME) as p; print(p.__version__)')
+
 # CKAN environment variables
 CKAN_PATH := ckan
 CKAN_REPO_URL := https://github.com/ckan/ckan.git
@@ -100,6 +104,13 @@ else
 	$(PASTER) --plugin=ckan serve --reload --monitor-restart $(CKAN_CONFIG_FILE)
 endif
 .PHONY: ckan-start
+
+## Create a version tag
+version-tag:
+	@echo "Creating tag: $(PACKAGE_TAG_PREFIX)$(PACKAGE_VERSION)$(PACKAGE_TAG_SUFFIX)"
+	$(GIT) tag "$(PACKAGE_TAG_PREFIX)$(PACKAGE_VERSION)$(PACKAGE_TAG_SUFFIX)"
+	$(GIT) push --tags
+.PHONY: version-tag
 
 $(CKAN_PATH):
 	$(GIT) clone $(CKAN_REPO_URL) $@
