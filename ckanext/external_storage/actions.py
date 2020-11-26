@@ -1,14 +1,13 @@
 """External Storage API actions
 """
 import ast
-from os import path
 from typing import Any, Dict
 
 from ckan.plugins import toolkit
-from six.moves.urllib.parse import urlparse
+from giftless_client import LfsClient
+from giftless_client.exc import LfsError
 
 from . import helpers
-from .lfs_client import LfsClient, LfsError
 
 
 @toolkit.side_effect_free
@@ -64,7 +63,7 @@ def get_lfs_client(context, resource):
     """Get an LFS client object; This is a poor man's DI solution
     that allows injecting an LFS client object via the CKAN context
     """
-    return context.get('lfs_client', LfsClient(helpers.server_url(), _get_authz_token(context, resource)))
+    return context.get('lfs_client', LfsClient(helpers.server_url(), get_authz_token(context, resource)))
 
 
 def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
@@ -72,7 +71,7 @@ def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
     """
     objects = [{"oid": r['sha256'],
                 "size": r['size'],
-                "x-filename": _get_filename(r)} for r in resources]
+                "x-filename": helpers.resource_filename(r)} for r in resources]
     try:
         batch_response = client.batch(lfs_prefix, 'download', objects)
     except LfsError as e:
@@ -88,7 +87,7 @@ def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
     return batch_response['objects']
 
 
-def _get_authz_token(context, resource):
+def get_authz_token(context, resource):
     # type: (Dict[str, Any], Dict[str, Any]) -> str
     """Get an authorization token for getting the URL from LFS
     """
@@ -115,15 +114,3 @@ def _get_resource(context, data_dict):
     if 'resource' in data_dict:
         return data_dict['resource']
     return toolkit.get_action('resource_show')(context, {'id': data_dict['id']})
-
-
-def _get_filename(resource):
-    """Get original file name from resource
-    """
-    if 'url' not in resource:
-        return resource['name']
-
-    if resource['url'][0:6] in {'http:/', 'https:'}:
-        url_path = urlparse(resource['url']).path
-        return path.basename(url_path)
-    return resource['url']
