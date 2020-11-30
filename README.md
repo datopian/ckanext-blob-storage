@@ -1,5 +1,5 @@
-# ckanext-blob-storage
-
+ckanext-blob-storage
+========================
 [![Build Status](https://travis-ci.org/datopian/ckanext-blob-storage.svg?branch=master)](https://travis-ci.org/datopian/ckanext-blob-storage)
 [![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-blob-storage/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-blob-storage?branch=master)
 
@@ -16,27 +16,26 @@ Internally, the external storage management service is in fact a Git LFS server
 implementation, which means access via 3rd party Git based tools is also
 potentially possible.
 
-## Requirements
+Requirements
+------------
+* This extension works with CKAN 2.8.x. It may work, but has not been tested,
+with other CKAN versions.
+* `ckanext-authz-service` must be installed and enabled
+* A working and configured Git LFS server accessible to the browser. We
+recommend usign [Giftless](https://github.com/datopian/giftless) but other
+implementations may be configured to work as well.
 
-- This extension works with CKAN 2.8.x. It may work, but has not been tested,
-  with other CKAN versions.
-- `ckanext-authz-service` must be installed and enabled
-- A working and configured Git LFS server accessible to the browser. We
-  recommend usign [Giftless](https://github.com/datopian/giftless) but other
-  implementations may be configured to work as well.
-
-## Installation
+Installation
+------------
 
 To install ckanext-external-storage:
 
 1. Activate your CKAN virtual environment, for example:
-
 ```
 . /usr/lib/ckan/default/bin/activate
 ```
 
 2. Install the ckanext-external-storage Python package into your virtual environment:
-
 ```
 pip install ckanext-external-storage
 ```
@@ -46,38 +45,36 @@ pip install ckanext-external-storage
    `/etc/ckan/default/production.ini`).
 
 4. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu:
-
 ```
 sudo service apache2 reload
 ```
 
-## Configuration settings
+Configuration settings
+----------------------
 
 `ckanext.external_storage.storage_service_url = 'https://...'`
 
 Set the URL of the external storage microservice (the Git LFS server). This
 must be a URL accessible to browsers connecting to the service.
 
-## Developer installation
+
+Developer installation
+----------------------
 
 To install `ckanext-external-storage` for development, do the following:
 
 1. Pull the project code from Github
-
 ```
 git clone https://github.com/datopian/ckanext-external-storage.git
 cd ckanext-external-storage
 ```
-
 2. Create a Python 2.7 virtual environment (The flag `-p py27` is used to ensure that you are using the right Python version when create the virtualenv).
-
 ```
 virtualenv .venv27 -p py27
 source .venv27/bin/activate
 ```
 
 3. Run the following command to bootstrap the entire environment
-
 ```
 make dev-start
 ```
@@ -97,17 +94,16 @@ You can repeat the last command at any time to start developing again.
 Type `make help` to get a like of user commands useful to managing the local
 environment.
 
-## Update DataPub (resource editor) app
+Update DataPub (resource editor) app
+------------------------------------
 
 1. Init submodule for the resource editor app
-
 ```
 git submodule init
 git submodule update
 ```
 
 2. Build the resource editor app
-
 ```
 cd datapub
 yarn
@@ -115,7 +111,6 @@ yarn build
 ```
 
 3. Replace bundles in `fanstatic` directory
-
 ```
 rm ckanext/external_storage/fanstatic/js/*
 cp datapub/build/static/js/*.js ckanext/external_storage/fanstatic/js/
@@ -138,7 +133,8 @@ cp datapub/build/static/css/*.css ckanext/external_storage/fanstatic/css/
 {% resource 'external-storage/js/main.{hash}.chunk.js' %}
 ```
 
-## Installing with Docker
+Installing with Docker
+----------------------
 
 Unlike other CKAN extensions, external storage needs node modules to be installed
 and build in order to work properly. You will need to install node and npm.
@@ -161,36 +157,37 @@ RUN pip install -e ckanext-external-storage
 ...
 ```
 
-**NOTE:** We assume that you have Giftless server running with configuration as
+__NOTE:__ We assume that you have Giftless server running with configuration as
 in [giftless.yaml][giftless] and nginx is configured as in [nginx.conf][nginx]
+
+
 
 ### Working with `requirements.txt` files
 
 #### tl;dr
 
-- You _do not_ touch `*requirements.*.txt` files directly. We use
-  [`pip-tools`][1] and custom `make` targets to manage these files.
-- Use `make develop` to install the right development time requirements into your
-  current virtual environment
-- Use `make install` to install the right runtime requirements into your current
-  virtual environment
-- To add requirements, edit `requirements.in` or `dev-requirements.in` and run
-  `make requirements`. This will recompile the requirements file(s) **for your
-  current Python version**. You may need to do this for the other Python version
-  by switching to a different Python virtual environment before committing your
-  changes.
+* You *do not* touch `*requirements.*.txt` files directly. We use
+[`pip-tools`][1] and custom `make` targets to manage these files.
+* Use `make develop` to install the right development time requirements into your
+current virtual environment
+* Use `make install` to install the right runtime requirements into your current
+virtual environment
+* To add requirements, edit `requirements.in` or `dev-requirements.in` and run
+`make requirements`. This will recompile the requirements file(s) **for your
+current Python version**. You may need to do this for the other Python version
+by switching to a different Python virtual environment before committing your
+changes.
 
 #### More background
-
 This project manages requirements in a relatively complex way, in order to
 seamlessly support Python 2.7 and 3.x.
 
 For this reason, you will see 4 requirements files in the project root:
 
-- `requirements.py2.txt` - Python 2 runtime requirements
-- `requirements.py3.txt` - Python 3 runtime requirements
-- `dev-requirements.py2.txt` - Python 2 development requirements
-- `dev-requirements.py3.txt` - Python 3 development requirements
+* `requirements.py2.txt` - Python 2 runtime requirements
+* `requirements.py3.txt` - Python 3 runtime requirements
+* `dev-requirements.py2.txt` - Python 2 development requirements
+* `dev-requirements.py3.txt` - Python 3 development requirements
 
 These are generated using the `pip-compile` command (a part of `pip-tools`)
 from the corresponding `requirements.in` and `dev-requirements.in` files.
@@ -206,7 +203,7 @@ major-version specific requirements files. These, in turn, should be used
 when installing the package.
 
 In order to simplify things, the `make` targets specified above will automate
-the process _for the current Python version_.
+the process *for the current Python version*.
 
 #### Adding Requirements
 
@@ -214,7 +211,7 @@ Requirements are managed in `.in` files - these are the only files that
 should be edited directly.
 
 Take care to specify a version for each requirement, to the level required
-to maintain future compatibility, but not to specify an _exact_ version
+to maintain future compatibility, but not to specify an *exact* version
 unless necessary.
 
 For example, the following are good `requirements.in` lines:
@@ -239,20 +236,23 @@ virtual environment, after updating the relevant `.in` file.
 You can delete `*requirements.*.txt` and run `make requirements`.
 
 TODO: we can probably do this in a better way - create a `make` target
-for this.
+for this.  
 
-## Tests
+
+Tests
+-----
 
 To run the tests, do:
 
     make test
 
 To run the tests and produce a coverage report, first make sure you have
-coverage installed in your virtualenv (`pip install coverage`) then run:
+coverage installed in your virtualenv (``pip install coverage``) then run:
 
     make coverage
 
-## Releasing a new version of ckanext-external-storage
+Releasing a new version of ckanext-external-storage
+------------------------------------------------
 
 ckanext-external-storage should be available on PyPI as https://pypi.org/project/ckanext-external-storage.
 To publish a new version to PyPI follow these steps:
@@ -262,39 +262,35 @@ To publish a new version to PyPI follow these steps:
    for how to choose version numbers.
 
 2. Make sure you have the latest version of necessary packages:
-
 ```
     pip install --upgrade setuptools wheel twine
 ```
 
 3. Create a source and binary distributions of the new version:
-
 ```
     python setup.py sdist bdist_wheel && twine check dist/*
 ```
 
-Fix any errors you get.
+   Fix any errors you get.
 
 4. Upload the source distribution to PyPI:
-
 ```
     twine upload dist/*
 ```
 
 5. Commit any outstanding changes:
-
 ```
     git commit -a
 ```
 
 6. Tag the new release of the project on GitHub with the version number from
-   the `setup.py` file. For example if the version number in `setup.py` is
+   the ``setup.py`` file. For example if the version number in ``setup.py`` is
    0.0.1 then do:
-
 ```
     git tag 0.0.1
     git push --tags
 ```
+
 
 [1]: https://pypi.org/project/pip-tools/
 [giftless]: docker/giftless.yaml
