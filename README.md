@@ -68,9 +68,9 @@ To install `ckanext-external-storage` for development, do the following:
 git clone https://github.com/datopian/ckanext-external-storage.git
 cd ckanext-external-storage
 ```
-2. Create a Python 2.7 virtual environment
+2. Create a Python 2.7 virtual environment (The flag `-p py27` is used to ensure that you are using the right Python version when create the virtualenv).
 ```
-virtualenv .venv27
+virtualenv .venv27 -p py27
 source .venv27/bin/activate
 ```
 
