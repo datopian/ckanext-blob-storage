@@ -41,15 +41,19 @@ services:
 
   giftless:
     image: datopian/giftless
-    command: ["-s", "0.0.0.0:5000", "-M", "-T", "--threads", "2", "-p", "2", "--manage-script-name", "--callable", "app"]
+    command: ["--http", "0.0.0.0:9419", "-M", "-T", "--threads", "2", "-p", "2", "--manage-script-name", "--callable", "app"]
     environment:
       - GIFTLESS_CONFIG_FILE=/etc/giftless.yaml
+      - GIFTLESS_DEBUG=true
     volumes:
       - ./docker/giftless.yaml:/etc/giftless.yaml:ro
-
-  nginx:
-    image: nginx:1.13
-    volumes:
-      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ../giftless:/app  # Use local giftless
     ports:
-      - "9419:80"
+      - "9419:9419"
+
+#  nginx:
+#    image: nginx:1.13
+#    volumes:
+#      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+#    ports:
+#      - "9419:80"
