@@ -40,7 +40,7 @@ CKAN_SOLR_PASSWORD := ckan
 DATASTORE_DB_NAME := datastore
 DATASTORE_DB_RO_USER := datastore_ro
 DATASTORE_DB_RO_PASSWORD := datastore_ro
-CKAN_LOAD_PLUGINS := external_storage authz_service stats text_view image_view recline_view datastore
+CKAN_LOAD_PLUGINS := stats text_view image_view recline_view datastore authz_service external_storage
 
 CKAN_CONFIG_VALUES := \
 		ckan.site_url=$(CKAN_SITE_URL) \

@@ -34,13 +34,15 @@ def resource_storage_prefix(package_name, org_name=None):
     return '{}/{}'.format(org_name, package_name)
 
 
-def resource_authz_scope(package_name, actions=None, org_name=None):
-    # type: (str, Optional[str], Optional[str]) -> str
+def resource_authz_scope(package_name, actions=None, org_name=None, sha256=None):
+    # type: (str, Optional[str], Optional[str], Optional[str]) -> str
     """Get the authorization scope for package resources
     """
     if actions is None:
         actions = 'read,write'
-    return 'obj:{}/*:{}'.format(resource_storage_prefix(package_name, org_name), actions)
+    if sha256 is None:
+        sha256 = '*'
+    return 'obj:{}/{}:{}'.format(resource_storage_prefix(package_name, org_name), sha256, actions)
 
 
 def server_url():
