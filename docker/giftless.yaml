@@ -6,7 +6,7 @@ AUTH_PROVIDERS:
     options:
       algorithm: HS256
       private_key: this-is-a-test-only-key
-  - giftless.auth.allow_anon:read_only
+#  - giftless.auth.allow_anon:read_only
 
 # In a local environment we'll use the default storage adapter
 TRANSFER_ADAPTERS: {}
@@ -15,3 +15,11 @@ TRANSFER_ADAPTERS: {}
 PRE_AUTHORIZED_ACTION_PROVIDER:
   options:
     private_key: another-test-only-key
+
+# Enable CORS requests from localhost:5000
+MIDDLEWARE:
+  - class: wsgi_cors_middleware:CorsMiddleware
+    kwargs:
+      origin: http://localhost:5000
+      headers: ['Content-type', 'Accept', 'Authorization']
+      methods: ['GET', 'POST', 'PUT']
