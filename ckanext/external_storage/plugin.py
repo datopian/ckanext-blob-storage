@@ -1,9 +1,10 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
+from ckanext.authz_service.authzzie import Authzzie
 from ckanext.authz_service.interfaces import IAuthorizationBindings
 
-from . import actions, helpers
+from . import actions, authz, helpers
 from .blueprints import blueprint
 from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
@@ -49,6 +50,7 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
     # IAuthorizationBindings
 
     def register_authz_bindings(self, authorizer):
+        # type: (Authzzie) -> None
         """Authorization Bindings
 
         This aliases CKANs Resource entity and actions to scopes understood by
@@ -56,6 +58,7 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
         """
         authorizer.register_type_alias('obj', 'res')
         authorizer.register_action_alias('write', 'update', 'res')
+        authorizer.register_scope_normalizer('res', authz.normalize_object_scope)
 
     # IResourceDownloadHandler
 

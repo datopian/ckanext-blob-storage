@@ -6,7 +6,6 @@ import tempfile
 import time
 from contextlib import contextmanager
 from datetime import datetime
-
 from typing import Any, Dict, Generator, Tuple
 
 import requests
