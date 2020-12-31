@@ -10,6 +10,7 @@ PIP_COMPILE := pip-compile
 PYTEST := pytest
 PASTER := paster
 DOCKER_COMPOSE := docker-compose
+PSQL := psql
 GIT := git
 
 # Find GNU sed in path (on OS X gsed should be preferred)
@@ -36,6 +37,7 @@ CKAN_SITE_URL := http://localhost:5000
 POSTGRES_USER := ckan
 POSTGRES_PASSWORD := ckan
 POSTGRES_DB := ckan
+POSTGRES_HOST := 127.0.0.1
 CKAN_SOLR_PASSWORD := ckan
 DATASTORE_DB_NAME := datastore
 DATASTORE_DB_RO_USER := datastore_ro
@@ -44,9 +46,9 @@ CKAN_LOAD_PLUGINS := stats text_view image_view recline_view datastore authz_ser
 
 CKAN_CONFIG_VALUES := \
 		ckan.site_url=$(CKAN_SITE_URL) \
-		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB) \
-		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
-		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME) \
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/$(POSTGRES_DB) \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/$(DATASTORE_DB_NAME) \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@$(POSTGRES_HOST)/$(DATASTORE_DB_NAME) \
 		ckan.plugins='$(CKAN_LOAD_PLUGINS)' \
 		ckan.storage_path='%(here)s/storage' \
 		solr_url=http://127.0.0.1:8983/solr/ckan \
@@ -57,9 +59,9 @@ CKAN_CONFIG_VALUES := \
 		ckanext.authz_service.jwt_include_user_email=true
 
 CKAN_TEST_CONFIG_VALUES := \
-		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)_test \
-		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
-		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test
+		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/$(POSTGRES_DB)_test \
+		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/$(DATASTORE_DB_NAME)_test \
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@$(POSTGRES_HOST)/$(DATASTORE_DB_NAME)_test
 
 ifdef WITH_COVERAGE
   COVERAGE_ARG := --cov=$(PACKAGE_NAME)
@@ -137,6 +139,17 @@ endif
 	___DATASTORE_DB_RO_PASSWORD=$(DATASTORE_DB_RO_PASSWORD) \
 	env | grep ^___ | $(SED) 's/^___//' > .env
 	@cat .env
+
+## Create the database for test running
+create-test-db:
+	@echo " \
+    	CREATE ROLE $(DATASTORE_DB_RO_USER) NOSUPERUSER NOCREATEDB NOCREATEROLE LOGIN PASSWORD '$(DATASTORE_DB_RO_PASSWORD)'; \
+    	CREATE DATABASE $(DATASTORE_DB_NAME)_test OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
+    	CREATE DATABASE $(POSTGRES_DB)_test OWNER $(POSTGRES_USER) ENCODING 'utf-8'; \
+    	GRANT ALL PRIVILEGES ON DATABASE $(DATASTORE_DB_NAME)_test TO $(POSTGRES_USER);  \
+    	GRANT ALL PRIVILEGES ON DATABASE $(POSTGRES_DB)_test TO $(POSTGRES_USER);  \
+    " | PGPASSWORD=$(POSTGRES_PASSWORD) $(PSQL) -h $(POSTGRES_HOST) --username "$(POSTGRES_USER)"
+.PHONY: create-test-db
 
 ## Start all Docker services
 docker-up: .env
