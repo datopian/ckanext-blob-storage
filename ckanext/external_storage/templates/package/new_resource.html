@@ -1,5 +1,5 @@
 {% ckan_extends %}
 
 {% block form %}
-  {% snippet 'external_storage/snippets/upload_module.html', pkg_name=pkg_name, api_key=c.userobj.apikey, base_url=g.site_url, parent=super %}
+  {% snippet 'external_storage/snippets/upload_module.html', pkg_id=pkg.id, api_key=c.userobj.apikey, base_url=g.site_url, parent=super %}
 {% endblock %}

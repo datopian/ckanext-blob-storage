@@ -7,6 +7,7 @@ import ckan.plugins.toolkit as toolkit
 from six.moves.urllib.parse import urlparse
 
 SERVER_URL_CONF_KEY = 'ckanext.external_storage.storage_service_url'
+STORAGE_NAMESPACE_CONF_KEY = 'ckanext.external_storage.storage_namespace'
 
 
 def resource_storage_prefix(package_name, org_name=None):
@@ -14,23 +15,7 @@ def resource_storage_prefix(package_name, org_name=None):
     """Get the resource storage prefix for a package name
     """
     if org_name is None:
-        context = {'ignore_auth': True}
-        try:
-            data_dict = {'id': package_name}
-            package = toolkit.get_action('package_show')(context, data_dict)
-        except toolkit.ObjectNotFound:
-            return ''
-
-        org = package.get('organization')
-        if not org and package.get('owner_org'):
-            org = toolkit.get_action('organization_show')(context, {"id": package['owner_org']})
-
-        if org:
-            org_name = org.get('name')
-
-    if not org_name:
-        org_name = '_'
-
+        org_name = storage_namespace()
     return '{}/{}'.format(org_name, package_name)
 
 
@@ -58,19 +43,10 @@ def server_url():
     return url
 
 
-def organization_name(package_name=None):
-    if package_name:
-        context = {'ignore_auth': True}
-        try:
-            data_dict = {'id': package_name}
-            package = toolkit.get_action('package_show')(context, data_dict)
-        except toolkit.ObjectNotFound:
-            return ''
-        org_name = organization_name_for_package(package)
-        if org_name:
-            return org_name
-
-    return '_'
+def storage_namespace():
+    """Get the storage namespace for this CKAN instance
+    """
+    return toolkit.config.get(STORAGE_NAMESPACE_CONF_KEY, '_')
 
 
 def organization_name_for_package(package):
