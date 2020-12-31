@@ -46,7 +46,10 @@ def server_url():
 def storage_namespace():
     """Get the storage namespace for this CKAN instance
     """
-    return toolkit.config.get(STORAGE_NAMESPACE_CONF_KEY, '_')
+    ns = toolkit.config.get(STORAGE_NAMESPACE_CONF_KEY)
+    if ns:
+        return ns
+    return 'ckan'
 
 
 def organization_name_for_package(package):
