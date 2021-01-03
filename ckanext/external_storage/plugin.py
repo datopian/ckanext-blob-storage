@@ -56,9 +56,13 @@ class ExternalStoragePlugin(plugins.SingletonPlugin):
         This aliases CKANs Resource entity and actions to scopes understood by
         Giftless' JWT authorization scheme
         """
-        authorizer.register_type_alias('obj', 'res')
-        authorizer.register_action_alias('write', 'update', 'res')
-        authorizer.register_scope_normalizer('res', authz.normalize_object_scope)
+        # Register object authorization bindings
+        authorizer.register_entity_ref_parser('obj', authz.object_id_parser)
+        authorizer.register_authorizer('obj', authz.check_object_permissions,
+                                       actions={'update', 'read'},
+                                       subscopes=(None, 'data', 'metadata'))
+        authorizer.register_action_alias('write', 'update', 'obj')
+        authorizer.register_scope_normalizer('obj', authz.normalize_object_scope)
 
     # IResourceDownloadHandler
 
