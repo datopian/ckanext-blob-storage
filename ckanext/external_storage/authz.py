@@ -4,10 +4,38 @@ import logging
 
 from ckan.plugins import toolkit
 
+from ckanext.authz_service.authz_binding import resource as resource_authz
 from ckanext.authz_service.authz_binding.common import get_user_context
 from ckanext.authz_service.authzzie import Scope
 
+from . import helpers
+
 log = logging.getLogger(__name__)
+
+
+def check_object_permissions(id, dataset_id=None, organization_id=None):
+    """Check object (resource in storage) permissions
+
+    This wrap's ckanext-authz-service's default logic for checking resource
+    by checking for global-prefix/dataset-uuid/* style object scopes.
+    """
+    if dataset_id and organization_id and organization_id == helpers.storage_namespace():
+        log.debug("Requesting authorization for object: %s/%s in namespace %s", dataset_id, id, organization_id)
+        dataset = toolkit.get_action('package_show')(get_user_context(), {'id': dataset_id})
+        dataset_id = dataset['name']
+        try:
+            organization_id = dataset['organization']['name']
+        except (KeyError, TypeError):
+            organization_id = None  # Dataset has no organization
+        log.debug("Real resource path is res:%s/%s/%s", organization_id, dataset_id, id)
+
+    return resource_authz.check_resource_permissions(id, dataset_id, organization_id)
+
+
+def object_id_parser(*args, **kwargs):
+    """Object (resource in storage) ID parser
+    """
+    return resource_authz.resource_id_parser(*args, **kwargs)
 
 
 def normalize_object_scope(_, granted_scope):

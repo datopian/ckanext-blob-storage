@@ -14,24 +14,24 @@ def test_server_url_strip_trailing_slash():
     assert 'https://foo.example.com/lfs' == helpers.server_url()
 
 
-def test_resource_storage_prefix_known_org():
+def test_resource_storage_prefix_explicit_org():
     prefix = helpers.resource_storage_prefix('mypackage', 'myorg')
     assert 'myorg/mypackage' == prefix
 
 
 @pytest.mark.usefixtures('clean_db', 'reset_db')
-def test_resource_storage_prefix_unknown_org():
-    org = factories.Organization(name='myorg')
-    factories.Dataset(name='mypackage', owner_org=org['name'])
+@pytest.mark.ckan_config('ckanext.external_storage.storage_namespace', 'some-namespace')
+def test_resource_storage_prefix_unspecified_org():
     prefix = helpers.resource_storage_prefix('mypackage')
-    assert 'myorg/mypackage' == prefix
+    assert 'some-namespace/mypackage' == prefix
 
 
 @pytest.mark.usefixtures('clean_db', 'reset_db')
+@pytest.mark.ckan_config('ckanext.external_storage.storage_namespace', 'some-namespace')
 def test_resource_storage_prefix_no_org():
     factories.Dataset(name='mypackage')
     prefix = helpers.resource_storage_prefix('mypackage')
-    assert '_/mypackage' == prefix
+    assert 'some-namespace/mypackage' == prefix
 
 
 def test_resource_authz_scope_default_actions():
@@ -42,3 +42,15 @@ def test_resource_authz_scope_default_actions():
 def test_resource_authz_scope_custom_actions():
     scope = helpers.resource_authz_scope('mypackage', actions='read', org_name='myorg')
     assert 'obj:myorg/mypackage/*:read' == scope
+
+
+@pytest.mark.ckan_config('ckanext.external_storage.storage_namespace', 'some-namespace')
+def test_resource_authz_scope_default_namespace():
+    scope = helpers.resource_authz_scope('mypackage')
+    assert 'obj:some-namespace/mypackage/*:read,write' == scope
+
+
+@pytest.mark.ckan_config('ckanext.external_storage.storage_namespace', None)
+def test_resource_authz_scope_no_configured_namespace():
+    scope = helpers.resource_authz_scope('mypackage')
+    assert 'obj:ckan/mypackage/*:read,write' == scope
