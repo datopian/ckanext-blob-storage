@@ -5,7 +5,6 @@ import shutil
 import tempfile
 import time
 from contextlib import contextmanager
-from datetime import datetime
 from typing import Any, Dict, Generator, Tuple
 
 import requests
@@ -17,7 +16,7 @@ from flask import Response
 from giftless_client import LfsClient
 from giftless_client.types import ObjectAttributes
 from six import binary_type, string_types
-from sqlalchemy import or_
+from sqlalchemy.orm import load_only
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.wsgi import FileWrapper
 
@@ -77,28 +76,28 @@ class MigrateResourcesCommand(CkanCommand):
 
         with download_resource(resource_dict, dataset) as resource_file:
             _log().debug("Starting to upload file: %s", resource_file)
-            org_name, dataset_name = get_resource_org_dataset(dataset)
-            props = self.upload_resource(resource_file, org_name, dataset_name, filename=resource_name)
-            props['lfs_prefix'] = '{}/{}'.format(org_name, dataset_name)
+            lfs_namespace = helpers.storage_namespace()
+            props = self.upload_resource(resource_file, dataset['id'], lfs_namespace, resource_name)
+            props['lfs_prefix'] = '{}/{}'.format(lfs_namespace, dataset['id'])
             props['sha256'] = props.pop('oid')
             _log().debug("Upload complete; sha256=%s, size=%d", props['sha256'], props['size'])
 
         update_storage_props(resource_obj, props)
 
-    def upload_resource(self, resource_file, organization, dataset, filename):
+    def upload_resource(self, resource_file, dataset_id, lfs_namespace, filename):
         # type: (str, str, str, str) -> ObjectAttributes
         """Upload a resource file to new storage using LFS server
         """
-        token = self.get_upload_authz_token(organization, dataset)
+        token = self.get_upload_authz_token(dataset_id)
         lfs_client = LfsClient(helpers.server_url(), token)
         with open(resource_file, 'rb') as f:
-            props = lfs_client.upload(f, organization, dataset, filename=filename)
+            props = lfs_client.upload(f, lfs_namespace, dataset_id, filename=filename)
 
         # Only return standard object attributes
         return {k: v for k, v in props.items() if k[0:2] != 'x-'}
 
-    def get_upload_authz_token(self, org_name, dataset_name):
-        # type: (str, str) -> str
+    def get_upload_authz_token(self, dataset_id):
+        # type: (str) -> str
         """Get an authorization token to upload the file to LFS
         """
         authorize = toolkit.get_action('authz_authorize')
@@ -106,7 +105,7 @@ class MigrateResourcesCommand(CkanCommand):
             raise RuntimeError("Cannot find authz_authorize; Is ckanext-authz-service installed?")
 
         context = {'ignore_auth': True, 'auth_user_obj': self._user}
-        scope = helpers.resource_authz_scope(dataset_name, org_name=org_name, actions='write')
+        scope = helpers.resource_authz_scope(dataset_id, actions='write')
         authz_result = authorize(context, {"scopes": [scope]})
 
         if not authz_result or not authz_result.get('token', False):
@@ -116,14 +115,6 @@ class MigrateResourcesCommand(CkanCommand):
             raise toolkit.NotAuthorized("You are not authorized to upload resources")
 
         return authz_result['token']
-
-
-def get_resource_org_dataset(dataset):
-    # type: (Dict[str, Any]) -> Tuple[str, str]
-    """Get a resouces' organization name and dataset name for use as lfs_prefix
-    """
-    org_name = helpers.organization_name_for_package(dataset)
-    return org_name, dataset['name']
 
 
 def update_storage_props(resource, lfs_props):
@@ -224,36 +215,42 @@ def get_unmigrated_resources():
     """
     session = Session()
     session.revisioning_disabled = True
-    resources = session.query(Resource).filter(
+
+    # Start from inspecting all uploaded, undeleted resources
+    all_resources = session.query(Resource).filter(
         Resource.url_type == 'upload',
         Resource.state != 'deleted',
-        or_(Resource.extras.notlike('%"lfs_prefix":%'), Resource.extras == None)  # noqa: E711
-    )
-    _log().info("There are ~%d resources left to migrate", resources.count())
+    ).order_by(
+        Resource.created
+    ).options(load_only("id", "extras"))
 
-    resources = resources.with_for_update(skip_locked=True).order_by(Resource.created)
-    last_resource_created = datetime.fromtimestamp(0)
-    while True:
+    for resource in all_resources:
+        if not _needs_migration(resource):
+            _log().debug("Skipping resource %s as it was already migrated", resource.id)
+            continue
+
         with db_transaction(session):
-            # We are going to use 'created' under the assumption that creation time is unique
-            # This is used to skip resources which have failed migration
-            resource = resources.filter(Resource.created > last_resource_created).first()
-            if resource is None:
-                break  # We are done here
+            locked_resource = session.query(Resource).fetch(resource.id).with_for_update(skip_locked=True).one_or_none()
+            if locked_resource is None:
+                _log().debug("Skipping resource %s as it is locked (being migrated?)", resource.id)
+                continue
 
-            # let's double check as the LIKE selection is not the safest
-            if _was_migrated(resource):
+            # let's double check as the resource might have been migrated by another process by now
+            if not _needs_migration(resource):
                 continue
 
             yield resource
-            last_resource_created = resource.created
 
 
-def _was_migrated(resource):
+def _needs_migration(resource):
     # type: (Resource) -> bool
     """Check the attributes of a resource to see if it was migrated
     """
-    return resource.extras.get('lfs_prefix') and resource.extras.get('sha256')
+    if not (resource.extras.get('lfs_prefix') and resource.extras.get('sha256')):
+        return True
+
+    expected_prefix = '/'.join([helpers.storage_namespace(), resource.package_id])
+    return resource.extras.get('lfs_prefix') != expected_prefix
 
 
 @contextmanager
