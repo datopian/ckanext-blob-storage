@@ -230,7 +230,9 @@ def get_unmigrated_resources():
             continue
 
         with db_transaction(session):
-            locked_resource = session.query(Resource).fetch(resource.id).with_for_update(skip_locked=True).one_or_none()
+            locked_resource = session.query(Resource).filter(Resource.id == resource.id).\
+                with_for_update(skip_locked=True).one_or_none()
+
             if locked_resource is None:
                 _log().debug("Skipping resource %s as it is locked (being migrated?)", resource.id)
                 continue
