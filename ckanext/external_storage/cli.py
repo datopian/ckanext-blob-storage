@@ -51,21 +51,21 @@ class MigrateResourcesCommand(CkanCommand):
         """Do the actual migration
         """
         migrated = 0
-        failed = 0
         for resource_obj in get_unmigrated_resources():
-            _log().info("Starting to migrate resource %s", resource_obj.id)
-            try:
-                self.migrate_resource(resource_obj)
-                _log().info("Finished migrating resource %s", resource_obj.id)
-                migrated += 1
-            except Exception:
-                _log().exception("Failed to migrate resource %s", resource_obj.id)
-                failed += 1
-                if failed >= self._max_failures:
-                    _log().error("Skipping resource after %d failures", failed)
-                    failed = 0
-                    continue
-                time.sleep(self._retry_delay)
+            _log().info("Starting to migrate resource %s [%s]", resource_obj.id, resource_obj.name)
+            failed = 0
+            while failed < self._max_failures:
+                try:
+                    self.migrate_resource(resource_obj)
+                    _log().info("Finished migrating resource %s", resource_obj.id)
+                    migrated += 1
+                    break
+                except Exception:
+                    _log().exception("Failed to migrate resource %s, retrying...", resource_obj.id)
+                    failed += 1
+                    time.sleep(self._retry_delay)
+            else:
+                _log().error("Skipping resource %s [%s] after %d failures", resource_obj.id, resource_obj.name, failed)
 
         _log().info("Finished migrating %d resources", migrated)
 
@@ -222,7 +222,7 @@ def get_unmigrated_resources():
         Resource.state != 'deleted',
     ).order_by(
         Resource.created
-    ).options(load_only("id", "extras"))
+    ).options(load_only("id", "extras", "package_id"))
 
     for resource in all_resources:
         if not _needs_migration(resource):
@@ -238,10 +238,10 @@ def get_unmigrated_resources():
                 continue
 
             # let's double check as the resource might have been migrated by another process by now
-            if not _needs_migration(resource):
+            if not _needs_migration(locked_resource):
                 continue
 
-            yield resource
+            yield locked_resource
 
 
 def _needs_migration(resource):
