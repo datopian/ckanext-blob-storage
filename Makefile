@@ -20,6 +20,7 @@ SED := $(shell which gsed sed | head -n1)
 CKAN_CLI := $(shell which ckan | head -n1)
 
 TEST_INI_PATH := ./test.ini
+TEST_PATH :=
 SENTINELS := .make-status
 
 PYTHON_VERSION := $(shell $(PYTHON) -c 'import sys; print(sys.version_info[0])')
@@ -252,7 +253,8 @@ $(SENTINELS)/tests-passed: $(SENTINELS)/test-setup $(shell find $(PACKAGE_DIR) -
 		--ckan-ini=$(TEST_INI_PATH) \
 		--doctest-modules \
 		--ignore $(PACKAGE_DIR)/cli.py  \
-		$(PACKAGE_DIR)
+		-s \
+		$(PACKAGE_DIR)/$(TEST_PATH)
 	@touch $@
 
 # Help related variables and targets
