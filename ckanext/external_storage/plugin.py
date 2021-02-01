@@ -4,19 +4,66 @@ import ckan.plugins.toolkit as toolkit
 from ckanext.authz_service.authzzie import Authzzie
 from ckanext.authz_service.interfaces import IAuthorizationBindings
 
-from . import actions, authz, helpers
+from . import actions, authz, helpers, validators
 from .blueprints import blueprint
 from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
 
 
-class ExternalStoragePlugin(plugins.SingletonPlugin):
+class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IBlueprint)
     plugins.implements(plugins.IActions)
     plugins.implements(IAuthorizationBindings)
     plugins.implements(IResourceDownloadHandler, inherit=True)
+    plugins.implements(plugins.IValidators)
+    plugins.implements(plugins.IDatasetForm)
+
+    # IDatasetForm
+    def create_package_schema(self):
+        # let's grab the default schema in our plugin
+        schema = super(ExternalStoragePlugin, self).create_package_schema()
+
+        schema['resources'].update({
+            'url_type': [
+                toolkit.get_validator('ignore_missing'),
+                toolkit.get_validator('upload_has_sha256'),
+                toolkit.get_validator('upload_has_size')
+                ]
+        })
+
+        return schema
+
+    def update_package_schema(self):
+        schema = super(ExternalStoragePlugin, self).update_package_schema()
+
+        schema['resources'].update({
+            'url_type': [
+                toolkit.get_validator('ignore_missing'),
+                toolkit.get_validator('upload_has_sha256'),
+                toolkit.get_validator('upload_has_size')
+                ]
+        })
+
+        return schema
+
+    def is_fallback(self):
+        # Return True to register this plugin as the default handler for
+        # package types not handled by any other IDatasetForm plugin.
+        return False
+
+    def package_types(self):
+        # This plugin doesn't handle any special package types, it just
+        # registers itself as the default (above).
+        return ['dataset']
+
+    # IValidators
+    def get_validators(self):
+        return {
+            u'upload_has_sha256': validators.upload_has_sha256,
+            u'upload_has_size': validators.upload_has_size,
+        }
 
     # IConfigurer
 
