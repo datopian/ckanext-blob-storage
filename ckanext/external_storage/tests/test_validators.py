@@ -21,6 +21,16 @@ def test_upload_has_size():
     validators.upload_has_size(key, flattened_data, {}, {})
 
 
+def test_upload_has_lfs_prefix():
+    key = ('resources', 0, 'url_type')
+    flattened_data = {
+        (u'resources', 0, u'url_type'): u'upload',
+        (u'resources', 0, u'url'): u'/my/file.csv',
+        (u'resources', 0, u'__extras'): {'lfs_prefix': u'lfs/prefix'}
+    }
+    validators.upload_has_lfs_prefix(key, flattened_data, {}, {})
+
+
 def test_sha256_doesnt_raise_if_not_upload():
     key = ('resources', 0, 'url_type')
     flattened_data = {
@@ -37,3 +47,12 @@ def test_size_doesnt_raise_if_not_upload():
         (u'resources', 0, u'url'): u'https://www.google.com',
     }
     validators.upload_has_size(key, flattened_data, {}, {})
+
+
+def test_lfs_prefix_doesnt_raise_if_not_upload():
+    key = ('resources', 0, 'url_type')
+    flattened_data = {
+        (u'resources', 0, u'url_type'): u'',
+        (u'resources', 0, u'url'): u'https://www.google.com',
+    }
+    validators.upload_has_lfs_prefix(key, flattened_data, {}, {})
