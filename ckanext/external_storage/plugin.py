@@ -35,6 +35,10 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
             'sha256': [
                 toolkit.get_validator('ignore_missing'),
                 toolkit.get_validator('valid_sha256')
+            ],
+            'size': [
+                toolkit.get_validator('ignore_missing'),
+                toolkit.get_validator('is_positive_integer'),
             ]
         })
 
@@ -53,6 +57,10 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
             'sha256': [
                 toolkit.get_validator('ignore_missing'),
                 toolkit.get_validator('valid_sha256')
+            ],
+            'size': [
+                toolkit.get_validator('ignore_missing'),
+                toolkit.get_validator('is_positive_integer'),
             ]
         })
 

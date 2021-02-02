@@ -68,3 +68,45 @@ def test_no_validation_error_if_all_fields_are_set():
                 }
             ]
         )
+
+
+@pytest.mark.usefixtures("clean_db")
+def test_validation_error_if_wrong_sha256():
+    with pytest.raises(toolkit.ValidationError):
+        factories.Dataset(
+            resources=[
+                {
+                    'url': '/my/file.csv',
+                    'url_type': 'upload',
+                    'sha256': 'wrong_sha256',
+                    'size': 123456
+                }
+            ]
+        )
+
+
+@pytest.mark.usefixtures("clean_db")
+def test_validation_error_if_size_not_positive_integer():
+    with pytest.raises(toolkit.ValidationError):
+        factories.Dataset(
+            resources=[
+                {
+                    'url': '/my/file.csv',
+                    'url_type': 'upload',
+                    'sha256': 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
+                    'size': -12
+                }
+            ]
+        )
+
+    with pytest.raises(toolkit.ValidationError):
+        factories.Dataset(
+            resources=[
+                {
+                    'url': '/my/file.csv',
+                    'url_type': 'upload',
+                    'sha256': 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
+                    'size': 0
+                }
+            ]
+        )
