@@ -43,7 +43,7 @@ def test_upload_has_lfs_prefix():
     flattened_data = {
         (u'resources', 0, u'url_type'): u'upload',
         (u'resources', 0, u'url'): u'/my/file.csv',
-        (u'resources', 0, u'__extras'): {'lfs_prefix': u'lfs/prefix'}
+        (u'resources', 0, u'lfs_prefix'): u'lfs/prefix'
     }
     validators.upload_has_lfs_prefix(key, flattened_data, {}, {})
 
@@ -60,6 +60,13 @@ def test_valid_sha256():
 
     with pytest.raises(Invalid):
         validators.valid_sha256('wrong_sha256')
+
+
+def test_valid_lfs_prefix():
+    validators.valid_lfs_prefix("lfs/prefix")
+
+    with pytest.raises(Invalid):
+        validators.valid_lfs_prefix("")
 
 
 def test_sha256_doesnt_raise_if_not_upload():

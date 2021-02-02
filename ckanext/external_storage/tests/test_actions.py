@@ -79,7 +79,8 @@ def test_validation_error_if_wrong_sha256():
                     'url': '/my/file.csv',
                     'url_type': 'upload',
                     'sha256': 'wrong_sha256',
-                    'size': 123456
+                    'size': 123456,
+                    'lfs_prefix': 'lfs/prefix'
                 }
             ]
         )
@@ -94,7 +95,8 @@ def test_validation_error_if_size_not_positive_integer():
                     'url': '/my/file.csv',
                     'url_type': 'upload',
                     'sha256': 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
-                    'size': -12
+                    'size': -12,
+                    'lfs_prefix': 'lfs/prefix'
                 }
             ]
         )
@@ -106,7 +108,24 @@ def test_validation_error_if_size_not_positive_integer():
                     'url': '/my/file.csv',
                     'url_type': 'upload',
                     'sha256': 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
-                    'size': 0
+                    'size': 0,
+                    'lfs_prefix': 'lfs/prefix'
+                }
+            ]
+        )
+
+
+@pytest.mark.usefixtures("clean_db")
+def test_validation_error_if_empty_lfs_prefix():
+    with pytest.raises(toolkit.ValidationError):
+        factories.Dataset(
+            resources=[
+                {
+                    'url': '/my/file.csv',
+                    'url_type': 'upload',
+                    'sha256': 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
+                    'size': 123456,
+                    'lfs_prefix': ''
                 }
             ]
         )

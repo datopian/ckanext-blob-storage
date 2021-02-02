@@ -39,6 +39,10 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
             'size': [
                 toolkit.get_validator('ignore_missing'),
                 toolkit.get_validator('is_positive_integer'),
+            ],
+            'lfs_prefix': [
+                toolkit.get_validator('ignore_missing'),
+                toolkit.get_validator('valid_lfs_prefix'),
             ]
         })
 
@@ -61,6 +65,10 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
             'size': [
                 toolkit.get_validator('ignore_missing'),
                 toolkit.get_validator('is_positive_integer'),
+            ],
+            'lfs_prefix': [
+                toolkit.get_validator('ignore_missing'),
+                toolkit.get_validator('valid_lfs_prefix'),
             ]
         })
 
@@ -82,7 +90,8 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
             u'upload_has_sha256': validators.upload_has_sha256,
             u'upload_has_size': validators.upload_has_size,
             u'upload_has_lfs_prefix': validators.upload_has_lfs_prefix,
-            u'valid_sha256': validators.valid_sha256
+            u'valid_sha256': validators.valid_sha256,
+            u'valid_lfs_prefix': validators.valid_lfs_prefix,
         }
 
     # IConfigurer

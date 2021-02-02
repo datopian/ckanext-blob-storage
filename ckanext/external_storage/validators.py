@@ -20,11 +20,13 @@ def upload_has_size(key, flattened_data, errors, context):
 
 def upload_has_lfs_prefix(key, flattened_data, errors, context):
     if flattened_data[key] == 'upload':
-        __extras_key = (key[0], key[1], '__extras')
-        if __extras_key not in flattened_data:
+        if (key[0], key[1], 'lfs_prefix') not in flattened_data:
             raise Invalid("Resource's lfs_prefix field cannot be missing for uploads.")
-        elif 'lfs_prefix' not in flattened_data[__extras_key]:
-            raise Invalid("Resource's lfs_prefix field cannot be missing for uploads.")
+
+
+def valid_lfs_prefix(value):
+    if value == "":
+        raise Invalid("Resource's lfs_prefix field cannot be empty.")
 
 
 def _is_hex_str(value, chars=40):
