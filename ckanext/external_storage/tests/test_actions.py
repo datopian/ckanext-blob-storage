@@ -57,17 +57,21 @@ def test_no_validation_error_if_not_upload():
 
 @pytest.mark.usefixtures("clean_db")
 def test_no_validation_error_if_all_fields_are_set():
-    factories.Dataset(
-            resources=[
-                {
-                    'url': '/my/file.csv',
-                    'url_type': 'upload',
-                    'sha256': 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
-                    'size': 12345,
-                    'lfs_prefix': 'lfs/prefix'
-                }
-            ]
-        )
+    dataset = factories.Dataset(
+        resources=[
+            {
+                'url': '/my/file.csv',
+                'url_type': 'upload',
+                'sha256': 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
+                'size': 12345,
+                'lfs_prefix': 'lfs/prefix'
+            }
+        ]
+    )
+
+    assert dataset['resources'][0]['sha256'] == 'cc71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919'
+    assert dataset['resources'][0]['size'] == 12345
+    assert dataset['resources'][0]['lfs_prefix'] == 'lfs/prefix'
 
 
 @pytest.mark.usefixtures("clean_db")

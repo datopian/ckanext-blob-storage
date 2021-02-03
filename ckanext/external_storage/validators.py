@@ -10,6 +10,7 @@ def upload_has_sha256(key, flattened_data, errors, context):
 def valid_sha256(value):
     if not _is_hex_str(value, 64):
         raise Invalid("Resource's sha256 is not a valid hex-only string.")
+    return value
 
 
 def upload_has_size(key, flattened_data, errors, context):
@@ -27,6 +28,7 @@ def upload_has_lfs_prefix(key, flattened_data, errors, context):
 def valid_lfs_prefix(value):
     if value == "":
         raise Invalid("Resource's lfs_prefix field cannot be empty.")
+    return value
 
 
 def _is_hex_str(value, chars=40):
