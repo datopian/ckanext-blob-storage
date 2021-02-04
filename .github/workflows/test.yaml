@@ -49,8 +49,9 @@ jobs:
         ckan-version: [ 2.8, 2.9 ]
         exclude:
           - python-version: 3.6
+            ckan-version: 2.8
           - python-version: 3.7
-          - ckan-version: 2.9
+            ckan-version: 2.8
     env:
       CKAN_PATH: ./ckan
       VIRTUAL_ENV: "1"  # let's fake a virtual environment, why not
