@@ -1,4 +1,4 @@
-"""ckanext-external-storage Flask blueprints
+"""ckanext-blob-storage Flask blueprints
 """
 from ckan.plugins import toolkit
 from flask import Blueprint
@@ -6,7 +6,7 @@ from flask import Blueprint
 from .download_handler import call_download_handlers, call_pre_download_handlers, get_context
 
 blueprint = Blueprint(
-    'extstorage',
+    'blob_storage',
     __name__,
 )
 

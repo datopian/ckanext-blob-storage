@@ -10,7 +10,7 @@ from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
 
 
-class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
+class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IBlueprint)
@@ -23,7 +23,7 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
     # IDatasetForm
     def create_package_schema(self):
         # let's grab the default schema in our plugin
-        schema = super(ExternalStoragePlugin, self).create_package_schema()
+        schema = super(BlobStoragePlugin, self).create_package_schema()
 
         schema['resources'].update({
             'url_type': [
@@ -49,7 +49,7 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
         return schema
 
     def update_package_schema(self):
-        schema = super(ExternalStoragePlugin, self).update_package_schema()
+        schema = super(BlobStoragePlugin, self).update_package_schema()
 
         schema['resources'].update({
             'url_type': [
@@ -85,6 +85,7 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
         return []
 
     # IValidators
+
     def get_validators(self):
         return {
             u'upload_has_sha256': validators.upload_has_sha256,
@@ -99,15 +100,13 @@ class ExternalStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm)
     def update_config(self, config):
         toolkit.add_template_directory(config, 'templates')
         toolkit.add_public_directory(config, 'public')
-        toolkit.add_resource('fanstatic', 'external-storage')
+        toolkit.add_resource('fanstatic', 'blob-storage')
 
     # ITemplateHelpers
 
     def get_helpers(self):
-        return {'extstorage_server_url': helpers.server_url,
-                # 'extstorage_resource_authz_scope': helpers.resource_authz_scope,
-                # 'extstorage_resource_storage_prefix': helpers.resource_storage_prefix,
-                'extstorage_storage_namespace': helpers.storage_namespace}
+        return {'blob_storage_server_url': helpers.server_url,
+                'blob_storage_storage_namespace': helpers.storage_namespace}
 
     # IBlueprint
 

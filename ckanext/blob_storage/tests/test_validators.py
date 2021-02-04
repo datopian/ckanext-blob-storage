@@ -1,7 +1,7 @@
 import pytest
 from ckan.plugins.toolkit import Invalid
 
-from ckanext.external_storage import validators
+from ckanext.blob_storage import validators
 
 
 def test_upload_has_sha256():
