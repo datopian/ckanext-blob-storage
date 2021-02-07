@@ -16,6 +16,55 @@ Internally, the blob storage management service is in fact a Git LFS server
 implementation, which means access via 3rd party Git based tools is also
 potentially possible.
 
+Configuration settings
+----------------------
+
+`ckanext.blob_storage.storage_service_url = 'https://...'`
+
+Set the URL of the blob storage microservice (the Git LFS server). This
+must be a URL accessible to browsers connecting to the service.
+
+`ckanext.blob_storage.storage_namespace = my-ckan-instance`
+
+Set the in-storage namespace used for this CKAN instance. This is useful if
+multiple CKAN instances are using the same storage microservice instance, and
+you need to seperate permission scopes between them. 
+
+If not specified, `ckan` will be used as the default namespace.
+
+Required resource fields
+------------------------
+
+There are a few resource fields that are required for `ckanext-blob-storage` to
+operate. API / SDK users needs to set them on the requests to create new
+resources.
+
+The required fields are:
+* `url`: the file name, without path (required by vanilla CKAN not just by blob storage)
+* `url_type`: set to "upload" for uploaded files
+* `sha256`: the SHA256 of the file
+* `size`: the size of the file in bytes
+* `lfs_prefix`: the LFS server path of where the file has been stored by Giftless.
+Something like **org/dataset** or **storage_namespace/dataset_id**.
+
+If `sha256`, `size` or `lfs_prefix` are missing for uploads
+(`'url_type == 'upload'`), the API call will return a ValidationError:
+
+```
+{
+  "help": "http://ckan:5000/api/3/action/help_show?name=resource_create",
+  "success": false,
+  "error": {
+    "__type": "Validation Error",
+    "url_type": [
+      "Resource's sha256 field cannot be missing for uploads.",
+      "Resource's size field cannot be missing for uploads.",
+      "Resource's lfs_prefix field cannot be missing for uploads."
+    ]
+  }
+}
+```
+
 Requirements
 ------------
 * This extension works with CKAN 2.8.x. It may work, but has not been tested,
@@ -48,22 +97,6 @@ pip install ckanext-blob-storage
 ```
 sudo service apache2 reload
 ```
-
-Configuration settings
-----------------------
-
-`ckanext.blob_storage.storage_service_url = 'https://...'`
-
-Set the URL of the blob storage microservice (the Git LFS server). This
-must be a URL accessible to browsers connecting to the service.
-
-`ckanext.blob_storage.storage_namespace = my-ckan-instance`
-
-Set the in-storage namespace used for this CKAN instance. This is useful if
-multiple CKAN instances are using the same storage microservice instance, and
-you need to seperate permission scopes between them. 
-
-If not specified, `ckan` will be used as the default namespace.
 
 Developer installation
 ----------------------
@@ -243,7 +276,7 @@ virtual environment, after updating the relevant `.in` file.
 You can delete `*requirements.*.txt` and run `make requirements`.
 
 TODO: we can probably do this in a better way - create a `make` target
-for this.  
+for this.
 
 
 Tests
