@@ -120,11 +120,12 @@ $(CKAN_PATH):
 	$(GIT) clone $(CKAN_REPO_URL) $@
 
 $(CKAN_CONFIG_FILE): $(SENTINELS)/ckan-installed $(SENTINELS)/develop | _check_virtualenv
-	$(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 ifdef CKAN_CLI
+	$(CKAN_CLI) generate config $(CKAN_CONFIG_FILE)
 	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
 	$(CKAN_CLI) config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 else
+    $(PASTER) make-config --no-interactive ckan $(CKAN_CONFIG_FILE)
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) -s DEFAULT debug=true
 	$(PASTER) --plugin=ckan config-tool $(CKAN_CONFIG_FILE) $(CKAN_CONFIG_VALUES)
 endif
