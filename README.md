@@ -1,6 +1,7 @@
 ckanext-blob-storage
 ========================
 [![Build Status](https://travis-ci.org/datopian/ckanext-blob-storage.svg?branch=master)](https://travis-ci.org/datopian/ckanext-blob-storage)
+![Tests](https://github.com/datopian/ckanext-authz-service/workflows/test/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-blob-storage/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-blob-storage?branch=master)
 
 **Move CKAN resource storage management to an external micro-service**
@@ -28,7 +29,7 @@ must be a URL accessible to browsers connecting to the service.
 
 Set the in-storage namespace used for this CKAN instance. This is useful if
 multiple CKAN instances are using the same storage microservice instance, and
-you need to seperate permission scopes between them. 
+you need to seperate permission scopes between them.
 
 If not specified, `ckan` will be used as the default namespace.
 
