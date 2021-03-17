@@ -68,8 +68,7 @@ If `sha256`, `size` or `lfs_prefix` are missing for uploads
 
 Requirements
 ------------
-* This extension works with CKAN 2.8.x. It may work, but has not been tested,
-with other CKAN versions.
+* This extension works with CKAN 2.8.x and CKAN 2.9.x.
 * `ckanext-authz-service` must be installed and enabled
 * A working and configured Git LFS server accessible to the browser. We
 recommend usign [Giftless](https://github.com/datopian/giftless) but other
