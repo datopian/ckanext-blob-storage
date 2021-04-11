@@ -9,7 +9,7 @@ class IResourceDownloadHandler(Interface):
     """A CKAN plugin interface for registering resource download handler plugins
     """
 
-    def pre_resource_download(self, resource, package):
+    def pre_resource_download(self, resource, package, activity_id=None):
         # type: (Dict[str, Any], Dict[str, Any], Optional[str]) -> Optional[Dict[str, Any]]
         """Pre-resource download function
 
@@ -27,8 +27,8 @@ class IResourceDownloadHandler(Interface):
         """
         pass
 
-    def resource_download(self, resource, package, filename=None):
-        # type: (Dict[str, Any], Dict[str, Any], Optional[str]) -> Any
+    def resource_download(self, resource, package, filename=None, activity_id=None):
+        # type: (Dict[str, Any], Dict[str, Any], Optional[str], Optional[str]) -> Any
         """Download a resource
 
         Called to download a resource, with the resource, package and filename

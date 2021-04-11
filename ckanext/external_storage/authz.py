@@ -56,14 +56,18 @@ def normalize_object_scope(_, granted_scope):
     for part in entity_ref_parts:
         if part is None or part in {'', '*'}:
             return granted_scope
-
+    if len(entity_ref_parts) > 3:
+        activity_id = entity_ref_parts[3]
+    else:
+        activity_id = None
     storage_id = _get_resource_storage_id(organization_id=entity_ref_parts[0],
                                           dataset_id=entity_ref_parts[1],
-                                          resource_id=entity_ref_parts[2])
+                                          resource_id=entity_ref_parts[2],
+                                          activity_id=activity_id)
     return Scope(granted_scope.entity_type, storage_id, granted_scope.actions, granted_scope.subscope)
 
 
-def _get_resource_storage_id(organization_id, dataset_id, resource_id):
+def _get_resource_storage_id(organization_id, dataset_id, resource_id, activity_id=None):
     # type: (str, str, str) -> str
     """Get the exact ID of the resource in storage, as opposed to it's ID in CKAN
 
@@ -74,9 +78,24 @@ def _get_resource_storage_id(organization_id, dataset_id, resource_id):
     <org_id>/<dataset_id> that the dataset had *when it was originally uploaded*, and
     does not change over time.
     """
-    dataset = toolkit.get_action('package_show')(get_user_context(), {'id': dataset_id})
-    for res in dataset['resources']:
-        if res['id'] == resource_id and res.get('sha256') and res.get('lfs_prefix'):
-            return '{}/{}'.format(res['lfs_prefix'], res['sha256'])
+    context = get_user_context()
+    if activity_id:
+        activity = toolkit.get_action(u'activity_show')(
+                    context, {u'id': activity_id, u'include_data': True})
+        activity_dataset = activity['data']['package']
+        assert activity_dataset['id'] == dataset_id
+        activity_resources = activity_dataset['resources']
+        for r in activity_resources:
+            if r['id'] == resource_id:
+                resource = r
+                break
+    else:
+        dataset = toolkit.get_action('package_show')(context, {'id': dataset_id})
+        for res in dataset['resources']:
+            if res['id'] == resource_id:
+                resource = res
+
+    if resource.get('sha256') and resource.get('lfs_prefix'):
+        return '{}/{}'.format(resource['lfs_prefix'], resource['sha256'])
 
     return '{}/{}/{}'.format(organization_id, dataset_id, resource_id)

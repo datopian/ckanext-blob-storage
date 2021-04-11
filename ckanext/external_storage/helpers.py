@@ -1,5 +1,6 @@
 """Template helpers for ckanext-external-storage
 """
+import logging
 from os import path
 from typing import Any, Dict, Optional
 
@@ -8,6 +9,8 @@ from six.moves.urllib.parse import urlparse
 
 SERVER_URL_CONF_KEY = 'ckanext.external_storage.storage_service_url'
 STORAGE_NAMESPACE_CONF_KEY = 'ckanext.external_storage.storage_namespace'
+
+log = logging.getLogger(__name__)
 
 
 def resource_storage_prefix(package_name, org_name=None):
@@ -19,7 +22,7 @@ def resource_storage_prefix(package_name, org_name=None):
     return '{}/{}'.format(org_name, package_name)
 
 
-def resource_authz_scope(package_name, actions=None, org_name=None, resource_id=None):
+def resource_authz_scope(package_name, actions=None, org_name=None, resource_id=None, activity_id=None):
     # type: (str, Optional[str], Optional[str], Optional[str]) -> str
     """Get the authorization scope for package resources
     """
@@ -27,7 +30,19 @@ def resource_authz_scope(package_name, actions=None, org_name=None, resource_id=
         actions = 'read,write'
     if resource_id is None:
         resource_id = '*'
-    return 'obj:{}/{}:{}'.format(resource_storage_prefix(package_name, org_name), resource_id, actions)
+    scope = 'obj:{}/{}:{}'.format(
+        resource_storage_prefix(package_name, org_name),
+        _resource_version(resource_id, activity_id),
+        actions
+    )
+    return scope
+
+
+def _resource_version(resource_id, activity_id):
+    result = resource_id
+    if activity_id:
+        result += "/{}".format(activity_id)
+    return result
 
 
 def server_url():
