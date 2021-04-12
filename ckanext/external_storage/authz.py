@@ -19,6 +19,8 @@ def check_object_permissions(id, dataset_id=None, organization_id=None):
     This wrap's ckanext-authz-service's default logic for checking resource
     by checking for global-prefix/dataset-uuid/* style object scopes.
     """
+    # support for resource_id/activity_id
+    id = id.split('/')[0]
     if dataset_id and organization_id and organization_id == helpers.storage_namespace():
         log.debug("Requesting authorization for object: %s/%s in namespace %s", dataset_id, id, organization_id)
         dataset = toolkit.get_action('package_show')(get_user_context(), {'id': dataset_id})
@@ -83,7 +85,6 @@ def _get_resource_storage_id(organization_id, dataset_id, resource_id, activity_
         activity = toolkit.get_action(u'activity_show')(
                     context, {u'id': activity_id, u'include_data': True})
         activity_dataset = activity['data']['package']
-        assert activity_dataset['id'] == dataset_id
         activity_resources = activity_dataset['resources']
         for r in activity_resources:
             if r['id'] == resource_id:

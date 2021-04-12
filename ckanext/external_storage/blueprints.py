@@ -17,6 +17,11 @@ blueprint = Blueprint(
 
 
 def download(dataset_id, resource_id, filename=None):
+    """Download resource blueprint
+
+    This calls all registered download handlers in order, until
+    a response is returned to the user
+    """
     activity_id = request.args.get('activity_id')
     log.error("UNAIDS resource download")
     context = get_context()
