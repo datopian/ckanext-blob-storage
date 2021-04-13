@@ -1,3 +1,5 @@
+import os
+
 from ckan import model, plugins
 from ckan.lib import uploader
 from ckan.plugins import toolkit as tk
@@ -66,7 +68,10 @@ def fallback_download_method(resource):
     if resource.get('url_type') == 'upload':
         upload = uploader.get_resource_uploader(resource)
         filepath = upload.get_path(resource[u'id'])
-        return send_file(filepath)
+        if os.path.exists(filepath):
+            return send_file(filepath)
+        else:
+            return tk.abort(404, tk._('File not found'))
     elif u'url' not in resource:
         return tk.abort(404, tk._('No download is available'))
 
