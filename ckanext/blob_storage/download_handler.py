@@ -18,7 +18,7 @@ def get_context():
     }
 
 
-def call_pre_download_handlers(resource, package):
+def call_pre_download_handlers(resource, package, activity_id=None):
     """Call all registered plugins pre-download callback
     """
     for plugin in plugins.PluginImplementations(IResourceDownloadHandler):
@@ -31,20 +31,20 @@ def call_pre_download_handlers(resource, package):
     return resource
 
 
-def call_download_handlers(resource, package, filename=None):
+def call_download_handlers(resource, package, filename=None, activity_id=None):
     """Call all registered plugins download handlers
     """
     for plugin in plugins.PluginImplementations(IResourceDownloadHandler):
         if not hasattr(plugin, 'resource_download'):
             continue
-        response = plugin.resource_download(resource, package, filename)
+        response = plugin.resource_download(resource, package, filename, activity_id=activity_id)
         if response:
             return response
 
     return fallback_download_method(resource)
 
 
-def download_handler(resource, _, filename=None):
+def download_handler(resource, _, filename=None, activity_id=None):
     """Get the download URL from LFS server and redirect the user there
     """
     if resource.get('url_type') != 'upload' or not resource.get('lfs_prefix'):
@@ -52,7 +52,8 @@ def download_handler(resource, _, filename=None):
 
     context = get_context()
     data_dict = {'resource': resource,
-                 'filename': filename}
+                 'filename': filename,
+                 'activity_id': activity_id}
     resource_download_spec = tk.get_action('get_resource_download_spec')(context, data_dict)
     href = resource_download_spec.get('href')
 

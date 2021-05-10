@@ -8,7 +8,7 @@ from ckanext.authz_service.authz_binding import resource as resource_authz
 from ckanext.authz_service.authz_binding.common import get_user_context
 from ckanext.authz_service.authzzie import Scope
 
-from . import helpers
+from . import helpers, actions
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +19,8 @@ def check_object_permissions(id, dataset_id=None, organization_id=None):
     This wrap's ckanext-authz-service's default logic for checking resource
     by checking for global-prefix/dataset-uuid/* style object scopes.
     """
+    # support for resource_id/activity_id
+    id = id.split('/')[0]
     if dataset_id and organization_id and organization_id == helpers.storage_namespace():
         log.debug("Requesting authorization for object: %s/%s in namespace %s", dataset_id, id, organization_id)
         dataset = toolkit.get_action('package_show')(get_user_context(), {'id': dataset_id})
@@ -57,14 +59,20 @@ def normalize_object_scope(_, granted_scope):
         if part is None or part in {'', '*'}:
             return granted_scope
 
+    if len(entity_ref_parts) > 3:
+        activity_id = entity_ref_parts[3]
+    else:
+        activity_id = None
+
     storage_id = _get_resource_storage_id(organization_id=entity_ref_parts[0],
                                           dataset_id=entity_ref_parts[1],
-                                          resource_id=entity_ref_parts[2])
+                                          resource_id=entity_ref_parts[2],
+                                          activity_id=activity_id)
     return Scope(granted_scope.entity_type, storage_id, granted_scope.actions, granted_scope.subscope)
 
 
-def _get_resource_storage_id(organization_id, dataset_id, resource_id):
-    # type: (str, str, str) -> str
+def _get_resource_storage_id(organization_id, dataset_id, resource_id, activity_id):
+    # type: (str, str, str, str) -> str
     """Get the exact ID of the resource in storage, as opposed to it's ID in CKAN
 
     A resource in CKAN is identified by <org_id>/<dataset_id>/<resource_id>. However,
@@ -74,9 +82,25 @@ def _get_resource_storage_id(organization_id, dataset_id, resource_id):
     <org_id>/<dataset_id> that the dataset had *when it was originally uploaded*, and
     does not change over time.
     """
-    dataset = toolkit.get_action('package_show')(get_user_context(), {'id': dataset_id})
+    context = get_user_context()
+    if activity_id:
+        activity = toolkit.get_action(u'activity_show')(
+                    context, {u'id': activity_id, u'include_data': True})
+        dataset = activity['data']['package']
+    else:
+        dataset = toolkit.get_action('package_show')(context, {'id': dataset_id})
+
+    resource = None
     for res in dataset['resources']:
-        if res['id'] == resource_id and res.get('sha256') and res.get('lfs_prefix'):
-            return '{}/{}'.format(res['lfs_prefix'], res['sha256'])
+        if res['id'] == resource_id:
+            resource = res
+            break
+
+    if not resource:
+        toolkit.ObjectNotFound("Resource not found.")
+
+    if resource.get('sha256') and resource.get('lfs_prefix'):
+        return '{}/{}'.format(resource['lfs_prefix'], resource['sha256'])
 
     return '{}/{}/{}'.format(organization_id, dataset_id, resource_id)
+
