@@ -9,7 +9,7 @@ from ckanext.blob_storage.tests import user_context
 def test_normalize_object_scope():
     scope = Scope('foo', 'bar', {'read'})
     normalized_scope = authz.normalize_object_scope(None, scope)
-    assert 'foo:bar:read' == str(scope)
+    assert 'foo:bar:read' == str(normalized_scope)
 
 
 @pytest.mark.usefixtures('clean_db', 'reset_db', 'with_request_context')
@@ -50,7 +50,8 @@ def test_normalize_object_scope_with_activity_id():
         lfs_prefix='lfs_prefix',
         package_id=dataset['id']
     )
-    resource_2 = helpers.call_action('resource_patch',
+    resource_2 = helpers.call_action(
+        'resource_patch',
         id=resource['id'],
         url='/my/file-2.csv',
         sha256='dd71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
@@ -71,7 +72,8 @@ def test_normalize_object_scope_with_activity_id():
     assert expected_scope == str(normalized_scope)
 
     # Editing the resource so the latest version is different from resource_2
-    helpers.call_action('resource_patch',
+    helpers.call_action(
+        'resource_patch',
         id=resource['id'],
         url='/my/file-3.csv',
         sha256='ee71500070cf26cd6e8eab7c9eec3a937be957d144f445ad24003157e2bd0919',
@@ -92,7 +94,7 @@ def test_normalize_object_scope_with_activity_id():
         )
     scope = Scope.from_string(scope_str)
 
-    with user_context(sysadmin) as context:
+    with user_context(sysadmin):
         normalized_scope = authz.normalize_object_scope(None, scope)
 
     assert expected_scope == str(normalized_scope)

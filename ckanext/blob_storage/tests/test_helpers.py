@@ -1,5 +1,5 @@
 import pytest
-from ckan.tests import factories, helpers
+from ckan.tests import factories
 
 from ckanext.blob_storage import helpers
 

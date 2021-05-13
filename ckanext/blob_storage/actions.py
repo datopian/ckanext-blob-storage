@@ -129,7 +129,13 @@ def get_download_authz_token(context, org_name, package_name, resource_id, activ
     if not authorize:
         raise RuntimeError("Cannot find authz_authorize; Is ckanext-authz-service installed?")
 
-    scope = helpers.resource_authz_scope(package_name, org_name=org_name, actions='read', resource_id=resource_id, activity_id=activity_id)
+    scope = helpers.resource_authz_scope(
+        package_name,
+        org_name=org_name,
+        actions='read',
+        resource_id=resource_id,
+        activity_id=activity_id
+        )
     log.debug("Requesting authorization token for scope: %s", scope)
     authz_result = authorize(context, {"scopes": [scope]})
     if not authz_result or not authz_result.get('token', False):
