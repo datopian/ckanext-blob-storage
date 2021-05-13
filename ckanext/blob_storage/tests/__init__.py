@@ -27,7 +27,7 @@ def user_context(user):
     def mock_context():
         return context
 
-    with patch('ckanext.blob_storage.authz_binding.common.get_user_context', mock_context):
+    with patch('ckanext.blob_storage.authz.get_user_context', mock_context):
         yield context
 
 
