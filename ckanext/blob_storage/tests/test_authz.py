@@ -1,9 +1,9 @@
 import pytest
 from ckan.tests import factories, helpers
 
+from ckanext.authz_service.authzzie import Scope
 from ckanext.blob_storage import authz
 from ckanext.blob_storage.tests import user_context
-from ckanext.authz_service.authzzie import Scope
 
 
 def test_normalize_object_scope():

@@ -8,7 +8,7 @@ from ckanext.authz_service.authz_binding import resource as resource_authz
 from ckanext.authz_service.authz_binding.common import get_user_context
 from ckanext.authz_service.authzzie import Scope
 
-from . import helpers, actions
+from . import actions, helpers
 
 log = logging.getLogger(__name__)
 
@@ -103,4 +103,3 @@ def _get_resource_storage_id(organization_id, dataset_id, resource_id, activity_
         return '{}/{}'.format(resource['lfs_prefix'], resource['sha256'])
 
     return '{}/{}/{}'.format(organization_id, dataset_id, resource_id)
-
