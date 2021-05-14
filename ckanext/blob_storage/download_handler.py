@@ -1,5 +1,5 @@
-import os
 import inspect
+import os
 
 from ckan import model, plugins
 from ckan.lib import uploader
