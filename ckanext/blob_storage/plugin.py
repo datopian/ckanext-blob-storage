@@ -141,5 +141,5 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
 
     # IResourceDownloadHandler
 
-    def resource_download(self, resource, package, filename=None):
-        return download_handler(resource, package, filename)
+    def resource_download(self, resource, package, filename=None, inline=False):
+        return download_handler(resource, package, filename, inline)

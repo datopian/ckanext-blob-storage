@@ -22,7 +22,8 @@ def get_resource_download_spec(context, data_dict):
         if k not in resource:
             return {}
 
-    return get_lfs_download_spec(context, resource)
+    inline = toolkit.asbool(data_dict.get('inline'))
+    return get_lfs_download_spec(context, resource, inline=inline)
 
 
 def get_lfs_download_spec(context,  # type: Dict[str, Any]
@@ -30,7 +31,8 @@ def get_lfs_download_spec(context,  # type: Dict[str, Any]
                           sha256=None,  # type: Optional[str]
                           size=None,  # type: Optional[int]
                           filename=None,  # type: Optional[str]
-                          storage_prefix=None  # type: Optional[str]
+                          storage_prefix=None,  # type: Optional[str]
+                          inline=False,  # type: Optional[bool]
                           ):  # type: (...) -> Dict[str, Any]
     """Get the LFS download spec (URL and headers) for a resource
 
@@ -55,6 +57,10 @@ def get_lfs_download_spec(context,  # type: Dict[str, Any]
     client = context.get('download_lfs_client', LfsClient(helpers.server_url(), authz_token))
 
     resources = [{"oid": sha256, "size": size, "x-filename": filename}]
+
+    if inline:
+        resources[0]["x-disposition"] = "inline"
+
     object_spec = _get_resource_download_lfs_objects(client, storage_prefix, resources)[0]
 
     assert object_spec['oid'] == sha256

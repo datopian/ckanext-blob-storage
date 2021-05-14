@@ -27,14 +27,16 @@ class IResourceDownloadHandler(Interface):
         """
         pass
 
-    def resource_download(self, resource, package, filename=None):
-        # type: (Dict[str, Any], Dict[str, Any], Optional[str]) -> Any
+    def resource_download(self, resource, package, filename=None, inline=False):
+        # type: (Dict[str, Any], Dict[str, Any], Optional[str], Optional[bool]) -> Any
         """Download a resource
 
         Called to download a resource, with the resource, package and filename
         (if specified in the download request URL) already provided, and after
         some basic authorization checks such as ``resource_show`` have been
-        performed.
+        performed. Additionally if the resource needs to be displayed inline
+        (ie not served as an attachment) the `inline=True` argument can be
+        passed.
 
         All resource download handlers will be called in plugin load order by
         the Blueprint view function responsible for file downloads. The first
