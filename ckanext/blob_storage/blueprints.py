@@ -24,6 +24,8 @@ def download(id, resource_id, filename=None):
         package = toolkit.get_action('package_show')(context, {'id': id})
     except toolkit.ObjectNotFound:
         return toolkit.abort(404, toolkit._('Dataset not found'))
+    except toolkit.NotAuthorized:
+        return toolkit.abort(401, toolkit._('Not authorized to read package {0}'.format(id)))
 
     if activity_id:
         try:
@@ -47,11 +49,14 @@ def download(id, resource_id, filename=None):
                 return toolkit.abort(404, toolkit._('Resource not found belonging to package'))
         except toolkit.ObjectNotFound:
             return toolkit.abort(404, toolkit._('Resource not found'))
-        except toolkit.NotAuthorized:
-            return toolkit.abort(401, toolkit._('Not authorized to read resource {0}'.format(resource_id)))
 
-    resource = call_pre_download_handlers(resource, package, activity_id=activity_id)
-    return call_download_handlers(resource, package, filename, activity_id=activity_id)
+    try:
+        resource = call_pre_download_handlers(resource, package, activity_id=activity_id)
+        return call_download_handlers(resource, package, filename, activity_id=activity_id)
+    except toolkit.ObjectNotFound:
+            return toolkit.abort(404, toolkit._('Resource not found'))
+    except toolkit.NotAuthorized:
+        return toolkit.abort(401, toolkit._('Not authorized to read resource {0}'.format(resource_id)))
 
 
 blueprint.add_url_rule(u'/dataset/<id>/resource/<resource_id>/download', view_func=download)
