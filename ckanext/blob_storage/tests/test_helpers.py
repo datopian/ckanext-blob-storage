@@ -54,3 +54,11 @@ def test_resource_authz_scope_default_namespace():
 def test_resource_authz_scope_no_configured_namespace():
     scope = helpers.resource_authz_scope('mypackage')
     assert 'obj:ckan/mypackage/*:read,write' == scope
+
+
+@pytest.mark.ckan_config('ckanext.blob_storage.storage_namespace', None)
+def test_resource_authz_scope_with_activity_id():
+    scope = helpers.resource_authz_scope('mypackage', activity_id='activity-id')
+    assert 'obj:ckan/mypackage/*/activity-id:read,write' == scope
+    scope = helpers.resource_authz_scope('mypackage', resource_id='resource-id', activity_id='activity-id')
+    assert 'obj:ckan/mypackage/resource-id/activity-id:read,write' == scope
