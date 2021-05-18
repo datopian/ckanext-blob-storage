@@ -18,13 +18,13 @@ def download(id, resource_id, filename=None):
     a response is returned to the user
     """
     context = get_context()
-    activity_id = toolkit.request.params.get('activity_id')
     resource = None
     try:
         resource = toolkit.get_action('resource_show')(context, {'id': resource_id})
         if id != resource['package_id']:
             return toolkit.abort(404, toolkit._('Resource not found belonging to package'))
 
+        activity_id = request.args.get('activity_id')
         inline = toolkit.asbool(request.args.get('preview'))
 
         package = toolkit.get_action('package_show')(context, {'id': id})
@@ -60,7 +60,7 @@ def download(id, resource_id, filename=None):
         resource = call_pre_download_handlers(resource, package, activity_id=activity_id)
         return call_download_handlers(resource, package, filename, inline, activity_id=activity_id)
     except toolkit.ObjectNotFound:
-            return toolkit.abort(404, toolkit._('Resource not found'))
+        return toolkit.abort(404, toolkit._('Resource not found'))
     except toolkit.NotAuthorized:
         return toolkit.abort(401, toolkit._('Not authorized to read resource {0}'.format(resource_id)))
 
