@@ -14,6 +14,7 @@ def test_normalize_object_scope():
 
 @pytest.mark.usefixtures('clean_db', 'reset_db', 'with_request_context')
 def test_normalize_object_scope_with_lfs():
+    sysadmin = factories.Sysadmin()
     org = factories.Organization()
     dataset = factories.Dataset(owner_org=org['id'])
     resource = factories.Resource(
@@ -28,7 +29,8 @@ def test_normalize_object_scope_with_lfs():
     scope_str = 'obj:{}/{}/{}:read'.format(org['name'], dataset['name'], resource['id'])
     scope = Scope.from_string(scope_str)
 
-    normalized_scope = authz.normalize_object_scope(None, scope)
+    with user_context(sysadmin):
+        normalized_scope = authz.normalize_object_scope(None, scope)
 
     expected_scpope = 'obj:{}/{}:read'.format(
         resource['lfs_prefix'],
@@ -62,7 +64,8 @@ def test_normalize_object_scope_with_activity_id():
     scope_str = 'obj:{}/{}/{}:read'.format(org['name'], dataset['name'], resource['id'])
     scope = Scope.from_string(scope_str)
 
-    normalized_scope = authz.normalize_object_scope(None, scope)
+    with user_context(sysadmin):
+        normalized_scope = authz.normalize_object_scope(None, scope)
 
     # Expected scope should have the current lfs metadata (lfs_prefix and sha256)
     expected_scope = 'obj:{}/{}:read'.format(
