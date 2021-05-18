@@ -19,19 +19,19 @@ def download(id, resource_id, filename=None):
     """
     context = get_context()
     resource = None
+
     try:
         resource = toolkit.get_action('resource_show')(context, {'id': resource_id})
         if id != resource['package_id']:
             return toolkit.abort(404, toolkit._('Resource not found belonging to package'))
-
-        activity_id = request.args.get('activity_id')
-        inline = toolkit.asbool(request.args.get('preview'))
-
         package = toolkit.get_action('package_show')(context, {'id': id})
     except toolkit.ObjectNotFound:
-        return toolkit.abort(404, toolkit._('Dataset not found'))
+        return toolkit.abort(404, toolkit._('Resource not found'))
     except toolkit.NotAuthorized:
-        return toolkit.abort(401, toolkit._('Not authorized to read package {0}'.format(id)))
+        return toolkit.abort(401, toolkit._('Not authorized to read resource {0}'.format(id)))
+
+    activity_id = request.args.get('activity_id')
+    inline = toolkit.asbool(request.args.get('preview'))
 
     if activity_id and toolkit.check_ckan_version(min_version='2.9'):
         try:
@@ -47,14 +47,6 @@ def download(id, resource_id, filename=None):
                     break
         except toolkit.NotFound:
             toolkit.abort(404, toolkit._(u'Activity not found'))
-
-    if not resource:
-        try:
-            resource = toolkit.get_action('resource_show')(context, {'id': resource_id})
-            if id != resource['package_id']:
-                return toolkit.abort(404, toolkit._('Resource not found belonging to package'))
-        except toolkit.ObjectNotFound:
-            return toolkit.abort(404, toolkit._('Resource not found'))
 
     try:
         resource = call_pre_download_handlers(resource, package, activity_id=activity_id)
