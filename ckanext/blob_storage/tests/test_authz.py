@@ -1,4 +1,5 @@
 import pytest
+from ckan.plugins import toolkit
 from ckan.tests import factories, helpers
 
 from ckanext.authz_service.authzzie import Scope
@@ -41,6 +42,8 @@ def test_normalize_object_scope_with_lfs():
 
 @pytest.mark.usefixtures('clean_db', 'reset_db', 'with_request_context')
 def test_normalize_object_scope_with_activity_id():
+    if not toolkit.check_ckan_version(min_version="2.9"):
+        pytest.skip("activity_id feature only available in CKAN 2.9+")
     sysadmin = factories.Sysadmin()
     org = factories.Organization()
     dataset = factories.Dataset(owner_org=org['id'])
