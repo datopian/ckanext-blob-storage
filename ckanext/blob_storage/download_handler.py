@@ -1,3 +1,4 @@
+import inspect
 import os
 
 from ckan import model, plugins
@@ -31,29 +32,35 @@ def call_pre_download_handlers(resource, package, activity_id=None):
     return resource
 
 
-def call_download_handlers(resource, package, filename=None, activity_id=None):
+def call_download_handlers(resource, package, filename=None, inline=False, activity_id=None):
     """Call all registered plugins download handlers
     """
     for plugin in plugins.PluginImplementations(IResourceDownloadHandler):
         if not hasattr(plugin, 'resource_download'):
             continue
-        response = plugin.resource_download(resource, package, filename, activity_id=activity_id)
+
+        if _handler_supports_extra_arg(plugin.resource_download):
+            response = plugin.resource_download(resource, package, filename, inline, activity_id)
+        else:
+            response = plugin.resource_download(resource, package, filename)
+
         if response:
             return response
 
     return fallback_download_method(resource)
 
 
-def download_handler(resource, _, filename=None, activity_id=None):
+def download_handler(resource, _, filename=None, inline=False, activity_id=None):
     """Get the download URL from LFS server and redirect the user there
     """
     if resource.get('url_type') != 'upload' or not resource.get('lfs_prefix'):
         return None
-
     context = get_context()
     data_dict = {'resource': resource,
                  'filename': filename,
+                 'inline': inline,
                  'activity_id': activity_id}
+
     resource_download_spec = tk.get_action('get_resource_download_spec')(context, data_dict)
     href = resource_download_spec.get('href')
 
@@ -77,3 +84,14 @@ def fallback_download_method(resource):
         return tk.abort(404, tk._('No download is available'))
 
     return tk.redirect_to(resource[u'url'])
+
+
+def _handler_supports_extra_arg(handler_function):
+    try:
+        # Python 3
+        args = inspect.getfullargspec(handler_function).args
+    except AttributeError:
+        # Python 2
+        args = inspect.getargspec(handler_function).args
+
+    return 'inline' in args and 'activity_id' in args
