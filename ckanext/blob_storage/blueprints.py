@@ -1,7 +1,7 @@
 """ckanext-blob-storage Flask blueprints
 """
 from ckan.plugins import toolkit
-from flask import Blueprint
+from flask import Blueprint, request
 
 from .download_handler import call_download_handlers, call_pre_download_handlers, get_context
 
@@ -24,10 +24,13 @@ def download(id, resource_id, filename=None):
         if id != resource['package_id']:
             return toolkit.abort(404, toolkit._('Resource not found belonging to package'))
 
+        inline = toolkit.asbool(request.args.get('preview'))
+
         package = toolkit.get_action('package_show')(context, {'id': id})
 
         resource = call_pre_download_handlers(resource, package)
-        return call_download_handlers(resource, package, filename)
+
+        return call_download_handlers(resource, package, filename, inline)
 
     except toolkit.ObjectNotFound:
         return toolkit.abort(404, toolkit._('Resource not found'))
