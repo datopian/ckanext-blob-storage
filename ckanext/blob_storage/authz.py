@@ -83,7 +83,7 @@ def _get_resource_storage_id(organization_id, dataset_id, resource_id, activity_
     does not change over time.
     """
     context = get_user_context()
-    if activity_id:
+    if activity_id and toolkit.check_ckan_version(min_version='2.9'):
         activity = toolkit.get_action(u'activity_show')(
                     context, {u'id': activity_id, u'include_data': True})
         dataset = activity['data']['package']

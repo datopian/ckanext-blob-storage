@@ -33,7 +33,7 @@ def download(id, resource_id, filename=None):
     except toolkit.NotAuthorized:
         return toolkit.abort(401, toolkit._('Not authorized to read package {0}'.format(id)))
 
-    if activity_id:
+    if activity_id and toolkit.check_ckan_version(min_version='2.9'):
         try:
             activity = toolkit.get_action(u'activity_show')(
                 context, {u'id': activity_id, u'include_data': True})
