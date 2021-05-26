@@ -5,11 +5,15 @@ from os import path
 from typing import Any, Dict
 
 from ckan.plugins import toolkit
+from ckan.common import config, request
+
 from six.moves.urllib.parse import urlparse
 
 from . import helpers
 from .lfs_client import LfsClient, LfsError
-
+import datetime
+import logging
+log = logging.getLogger(__name__)
 
 @toolkit.side_effect_free
 def get_resource_download_spec(context, data_dict):
@@ -28,7 +32,16 @@ def get_resource_download_spec(context, data_dict):
     if 'error' in object:
         raise toolkit.ObjectNotFound('Object error [{}]: {}'.format(object['error'].get('message', '[no message]'),
                                                                     object['error'].get('code', 'unknown')))
+    log_data = {
+        'resource_name':resource.get('name',''),
+        'storage_egress_size': object.get('size',''),
+        'storage_egress_link': resource.get('url','')
 
+    }
+    try:
+        create_egress_log(log_data)
+    except:
+        pass
     return object['actions']['download']
 
 
@@ -127,3 +140,34 @@ def _get_filename(resource):
         url_path = urlparse(resource['url']).path
         return path.basename(url_path)
     return resource['url']
+
+def create_egress_log(log_data):
+    try:
+        # Get Environ for the IP, user-agent and Remote User
+        environ = request.environ
+        user = environ.get('REMOTE_USER', None)
+        if 'HTTP_X_REAL_IP' in environ:
+            ip = environ.get('HTTP_X_REAL_IP', None)
+        else:
+            ip = environ.get('REMOTE_ADDR', None)
+        agent = environ.get('HTTP_USER_AGENT',None)
+        start_time = str(datetime.datetime.now())
+        data = {
+            "timestamp": str(datetime.datetime.now()),
+            "log_egress":{
+                "ip": ip,
+                "http_user_agent": agent,
+                "remote_user": user,
+                "start_time": start_time,
+                "resource_name": log_data.get('resource_name',''),
+                "api_call_type": 'file_download',
+                "storage_egress": log_data.get('storage_egress_size', ''),
+                "storage_egress_link": log_data.get('storage_egress_link')
+            }
+
+        }
+        log_name = config.get('egress_log_name', 'nhs-egress-log')
+        log.warning("{} {}".format(log_name, data))
+    except:
+        pass
+
