@@ -1,8 +1,8 @@
-{% resource 'blob-storage/css/main.3c074c8b.chunk.css' %}
-
-{% resource 'blob-storage/js/runtime-main.c155da57.js' %}
-{% resource 'blob-storage/js/2.60dfd475.chunk.js' %}
-{% resource 'blob-storage/js/main.c8e9dac3.chunk.js' %}
+{% if h.ckan_29_or_higher %}
+  {% include 'assets_2.9.html' %}
+{% else %}
+  {% include 'resource_2.8.html' %}
+{% endif %}
 
 <div id="ResourceEditor"
      data-dataset-id="{{ pkg_id }}"

@@ -100,13 +100,16 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     def update_config(self, config):
         toolkit.add_template_directory(config, 'templates')
         toolkit.add_public_directory(config, 'public')
-        toolkit.add_resource('fanstatic', 'blob-storage')
+        toolkit.add_resource('assets', 'blob-storage')
 
     # ITemplateHelpers
 
     def get_helpers(self):
-        return {'blob_storage_server_url': helpers.server_url,
-                'blob_storage_storage_namespace': helpers.storage_namespace}
+        return {
+            'blob_storage_server_url': helpers.server_url,
+            'blob_storage_storage_namespace': helpers.storage_namespace,
+            'ckan_29_or_higher': plugins.toolkit.check_ckan_version(min_version='2.9.0')
+          }
 
     # IBlueprint
 
