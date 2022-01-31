@@ -22,26 +22,25 @@ msgstr ""
 
 #: ckanext/blob_storage/blueprints.py:26
 msgid "Resource not found belonging to package"
-msgstr ""
+msgstr "Recurso não encontrado pertencente ao pacote"
 
 #: ckanext/blob_storage/blueprints.py:29 ckanext/blob_storage/blueprints.py:55
 msgid "Resource not found"
-msgstr ""
+msgstr "Recurso não encontrado"
 
 #: ckanext/blob_storage/blueprints.py:31 ckanext/blob_storage/blueprints.py:57
 msgid "Not authorized to read resource {0}"
-msgstr ""
+msgstr "Não autorizado a ler o recurso {0}"
 
 #: ckanext/blob_storage/blueprints.py:49
 msgid "Activity not found"
-msgstr ""
+msgstr "Atividade não encontrada"
 
 #: ckanext/blob_storage/download_handler.py:70
 #: ckanext/blob_storage/download_handler.py:84
 msgid "No download is available"
-msgstr ""
+msgstr "Não há download disponível"
 
 #: ckanext/blob_storage/download_handler.py:82
 msgid "File not found"
-msgstr ""
-
+msgstr "Ficheiro não encontrado"
