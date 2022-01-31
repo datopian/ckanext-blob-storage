@@ -22,26 +22,25 @@ msgstr ""
 
 #: ckanext/blob_storage/blueprints.py:26
 msgid "Resource not found belonging to package"
-msgstr ""
+msgstr "Ressource introuvable appartenant au paquet"
 
 #: ckanext/blob_storage/blueprints.py:29 ckanext/blob_storage/blueprints.py:55
 msgid "Resource not found"
-msgstr ""
+msgstr "Ressource introuvable"
 
 #: ckanext/blob_storage/blueprints.py:31 ckanext/blob_storage/blueprints.py:57
 msgid "Not authorized to read resource {0}"
-msgstr ""
+msgstr "Non autorisé à lire la ressource {0}"
 
 #: ckanext/blob_storage/blueprints.py:49
 msgid "Activity not found"
-msgstr ""
+msgstr "Activité introuvable"
 
 #: ckanext/blob_storage/download_handler.py:70
 #: ckanext/blob_storage/download_handler.py:84
 msgid "No download is available"
-msgstr ""
+msgstr "Aucun téléchargement n’est disponible"
 
 #: ckanext/blob_storage/download_handler.py:82
 msgid "File not found"
-msgstr ""
-
+msgstr "Fichier introuvable"
