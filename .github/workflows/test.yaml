@@ -45,7 +45,7 @@ jobs:
 
     strategy:
       matrix:
-        ckan-version: [ 2.9, "2.10" ]
+        ckan-version: [ 2.9, "dev-v2.10" ]
       fail-fast: false
     env:
       CKAN_PATH: ./ckan
