@@ -13,17 +13,19 @@ from . import helpers
 log = logging.getLogger(__name__)
 
 
-def check_object_permissions(id, dataset_id=None, organization_id=None):
+def check_object_permissions(id, dataset_id=None, organization_id=None, context=None):
     """Check object (resource in storage) permissions
 
     This wrap's ckanext-authz-service's default logic for checking resource
     by checking for global-prefix/dataset-uuid/* style object scopes.
     """
+    if not context:
+        context = get_user_context()
     # support for resource_id/activity_id
     id = id.split('/')[0]
     if dataset_id and organization_id and organization_id == helpers.storage_namespace():
         log.debug("Requesting authorization for object: %s/%s in namespace %s", dataset_id, id, organization_id)
-        dataset = toolkit.get_action('package_show')(get_user_context(), {'id': dataset_id})
+        dataset = toolkit.get_action('package_show')(context, {'id': dataset_id})
         dataset_id = dataset['name']
         try:
             organization_id = dataset['organization']['name']
@@ -31,7 +33,7 @@ def check_object_permissions(id, dataset_id=None, organization_id=None):
             organization_id = None  # Dataset has no organization
         log.debug("Real resource path is res:%s/%s/%s", organization_id, dataset_id, id)
 
-    return resource_authz.check_resource_permissions(id, dataset_id, organization_id)
+    return resource_authz.check_resource_permissions(id, dataset_id, organization_id, context=context)
 
 
 def object_id_parser(*args, **kwargs):
