@@ -1,7 +1,8 @@
-import mock
 import pytest
+
 from ckan.plugins import toolkit
 from ckan.tests import factories
+from unittest import mock
 
 
 @pytest.mark.usefixtures('clean_db')

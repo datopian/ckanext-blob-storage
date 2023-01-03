@@ -45,21 +45,18 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ 2.7, 3.7 ]
-        ckan-version: [ 2.8, 2.9 ]
-        exclude:
-          - python-version: 3.7
-            ckan-version: 2.8
+        ckan-version: [ 2.9, "2.10" ]
+      fail-fast: false
     env:
       CKAN_PATH: ./ckan
       VIRTUAL_ENV: "1"  # let's fake a virtual environment, why not
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.8
       - name: Set up the test environment
         run: |
           make ckan-install CKAN_VERSION=${{ matrix.ckan-version }}

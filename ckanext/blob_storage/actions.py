@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional
 from ckan.plugins import toolkit
 from giftless_client import LfsClient
 from giftless_client.exc import LfsError
-from six import ensure_text
 
 from . import helpers
 
@@ -153,7 +152,7 @@ def get_download_authz_token(context, org_name, package_name, resource_id, activ
     if len(authz_result['granted_scopes']) == 0:
         raise toolkit.NotAuthorized("You are not authorized to download this resource")
 
-    return ensure_text(authz_result['token'])
+    return str(authz_result['token'])
 
 
 def _get_resource(context, data_dict):
