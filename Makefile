@@ -72,10 +72,10 @@ endif
 
 
 dev-requirements.%.txt: dev-requirements.in
-	$(PIP_COMPILE) --no-index dev-requirements.in -o $@
+	$(PIP_COMPILE) dev-requirements.in -o $@
 
 requirements.%.txt: requirements.in
-	$(PIP_COMPILE) --no-index requirements.in -o $@
+	$(PIP_COMPILE) requirements.in -o $@
 
 ## Update requirements files for the current Python version
 requirements: $(SENTINELS)/requirements
