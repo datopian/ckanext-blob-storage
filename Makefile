@@ -198,7 +198,7 @@ $(SENTINELS)/ckan-version: $(CKAN_PATH) | _check_virtualenv $(SENTINELS)
 	$(GIT) -C $(CKAN_PATH) remote update
 	$(GIT) -C $(CKAN_PATH) checkout $(CKAN_VERSION)
 	if [ -e $(CKAN_PATH)/requirement-setuptools.txt ]; then $(PIP) install -r $(CKAN_PATH)/requirement-setuptools.txt; fi
-    $(PIP) install -r $(CKAN_PATH)/requirements.txt; \
+    $(PIP) install -r $(CKAN_PATH)/requirements.txt
 	$(PIP) install -r $(CKAN_PATH)/dev-requirements.txt
 	$(PIP) install -e $(CKAN_PATH)
 	echo "$(CKAN_VERSION)" > $@
