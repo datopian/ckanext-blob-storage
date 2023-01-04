@@ -46,6 +46,10 @@ jobs:
         pip install -r requirements.txt
         # Replace default path to CKAN core config file with the one on the container
         sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
+    - name: Setup ckan.plugins for CKAN 2.9
+      if: ${{ matrix.ckan-version == '2.9' }}
+      run: |
+        ckan config-tool test.ini ckan.plugins=blob_storage
     - name: Setup extension
       run: |
         pip install -e .
