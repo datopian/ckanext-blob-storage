@@ -40,15 +40,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install extension
+    - name: Install requirements
       run: |
-        pip install -e .
+        pip install -r dev-requirements.txt
+        pip install -r requirements.txt
         # Replace default path to CKAN core config file with the one on the container
         sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
     - name: Setup extension
       run: |
-        pip install -r dev-requirements.txt
-        pip install -r requirements.txt
+        pip install -e .
         ckan -c test.ini db init
     - name: Run tests
       run: pytest --ckan-ini=test.ini --disable-warnings ckanext/blob_storage/tests
