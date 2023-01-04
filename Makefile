@@ -71,11 +71,11 @@ else
 endif
 
 
-dev-requirements.%.txt: dev-requirements.in
-	$(PIP_COMPILE) --no-index dev-requirements.in -o $@
+dev-requirements.txt: dev-requirements.in
+	$(PIP_COMPILE) dev-requirements.in -o $@
 
-requirements.%.txt: requirements.in
-	$(PIP_COMPILE) --no-index requirements.in -o $@
+requirements.txt: requirements.in
+	$(PIP_COMPILE) requirements.in -o $@
 
 ## Update requirements files for the current Python version
 requirements: $(SENTINELS)/requirements
@@ -198,11 +198,7 @@ $(SENTINELS)/ckan-version: $(CKAN_PATH) | _check_virtualenv $(SENTINELS)
 	$(GIT) -C $(CKAN_PATH) remote update
 	$(GIT) -C $(CKAN_PATH) checkout $(CKAN_VERSION)
 	if [ -e $(CKAN_PATH)/requirement-setuptools.txt ]; then $(PIP) install -r $(CKAN_PATH)/requirement-setuptools.txt; fi
-	if [[ "$(PYTHON_VERSION)" == "2" && -e $(CKAN_PATH)/requirements-py2.txt ]]; then \
-	  $(PIP) install -r $(CKAN_PATH)/requirements-py2.txt; \
-	else \
-	  $(PIP) install -r $(CKAN_PATH)/requirements.txt; \
-	fi
+    $(PIP) install -r $(CKAN_PATH)/requirements.txt; \
 	$(PIP) install -r $(CKAN_PATH)/dev-requirements.txt
 	$(PIP) install -e $(CKAN_PATH)
 	echo "$(CKAN_VERSION)" > $@
@@ -224,15 +220,15 @@ else
 endif
 	@touch $@
 
-$(SENTINELS)/requirements: requirements.py$(PYTHON_VERSION).txt dev-requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
+$(SENTINELS)/requirements: requirements.txt dev-requirements.txt | $(SENTINELS)
 	@touch $@
 
-$(SENTINELS)/install: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
-	$(PIP) install -r requirements.py$(PYTHON_VERSION).txt
+$(SENTINELS)/install: requirements.txt | $(SENTINELS)
+	$(PIP) install -r requirements.txt
 	@touch $@
 
-$(SENTINELS)/install-dev: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
-	$(PIP) install -r dev-requirements.py$(PYTHON_VERSION).txt
+$(SENTINELS)/install-dev: requirements.txt | $(SENTINELS)
+	$(PIP) install -r dev-requirements.txt
 	$(PIP) install -e .
 	@touch $@
 
