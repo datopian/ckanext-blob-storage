@@ -152,7 +152,7 @@ def get_download_authz_token(context, org_name, package_name, resource_id, activ
     if len(authz_result['granted_scopes']) == 0:
         raise toolkit.NotAuthorized("You are not authorized to download this resource")
 
-    return str(authz_result['token'])
+    return authz_result['token']
 
 
 def _get_resource(context, data_dict):
