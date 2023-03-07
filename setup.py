@@ -15,7 +15,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # http://packaging.python.org/en/latest/tutorial.html#version
-    version='0.8.2',
+    version='0.9.0',
 
     description='''Store CKAN data files using an external Git LFS based storage microservice''',
     long_description=long_description,
