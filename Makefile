@@ -70,10 +70,6 @@ else
   COVERAGE_ARG :=
 endif
 
-
-dev-requirements.%.txt: dev-requirements.in
-	$(PIP_COMPILE) dev-requirements.in -o $@
-
 requirements.%.txt: requirements.in
 	$(PIP_COMPILE) requirements.in -o $@
 
