@@ -1,4 +1,4 @@
 typing_extensions
 giftless-client
--r https://raw.githubusercontent.com/datopian/ckanext-authz-service/ckan-2.10-support/requirements.in
-git+https://github.com/datopian/ckanext-authz-service.git@ckan-2.10-support#egg=ckanext-authz-service
+-r https://raw.githubusercontent.com/datopian/ckanext-authz-service/d179b19469faff7e461191db53e31c60d19003bc/requirements.in
+git+https://github.com/datopian/ckanext-authz-service.git@d179b19469faff7e461191db53e31c60d19003bc#egg=ckanext-authz-service
