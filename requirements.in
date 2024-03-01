@@ -1,6 +1,0 @@
-requests==2.*,>=2.23.0
-six==1.14.*
-typing==3.7.*
-giftless-client==0.1.*
--r https://raw.githubusercontent.com/datopian/ckanext-authz-service/v0.1.5/requirements.in
-git+https://github.com/datopian/ckanext-authz-service.git@v0.1.5#egg=ckanext-authz-service

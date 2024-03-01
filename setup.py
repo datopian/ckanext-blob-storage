@@ -3,8 +3,6 @@ from setuptools import setup, find_packages  # Always prefer setuptools over dis
 from codecs import open  # To use a consistent encoding
 from os import path
 
-import ckanext.blob_storage
-
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the relevant file
@@ -17,7 +15,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # http://packaging.python.org/en/latest/tutorial.html#version
-    version=ckanext.blob_storage.__version__,
+    version='0.9.0',
 
     description='''Store CKAN data files using an external Git LFS based storage microservice''',
     long_description=long_description,
@@ -82,11 +80,11 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points='''
         [ckan.plugins]
-        blob_storage=ckanext.blob_storage.plugin:BlobStoragePlugin 
+        blob_storage=ckanext.blob_storage.plugin:BlobStoragePlugin
 
         [babel.extractors]
         ckan = ckan.lib.extract:extract_ckan
-        
+
         [paste.paster_command]
         migrate-resources = ckanext.blob_storage.cli:MigrateResourcesCommand
     ''',

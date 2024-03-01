@@ -15,7 +15,6 @@ from ckan.plugins import toolkit
 from flask import Response
 from giftless_client import LfsClient
 from giftless_client.types import ObjectAttributes
-from six import binary_type, string_types
 from sqlalchemy.orm import load_only
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.wsgi import FileWrapper
@@ -158,7 +157,7 @@ def _save_downloaded_response_data(response, file_name):
     to a temporary file
     """
     with open(file_name, 'wb') as f:
-        if isinstance(response.response, (string_types, binary_type)):
+        if isinstance(response.response, (str, bytes)):
             _log().debug("Response contains inline string data, saving to %s", file_name)
             f.write(response.response)
         elif isinstance(response.response, FileWrapper):

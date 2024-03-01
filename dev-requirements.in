@@ -1,6 +1,0 @@
-pip-tools==4.5.*
-pytest==4.6.*
-pytest-ckan==0.0.*
-pytest-cov==2.8.*
-pytest-flake8==1.0.*
-pytest-isort==0.3.*

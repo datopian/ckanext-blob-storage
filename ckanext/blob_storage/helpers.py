@@ -4,7 +4,7 @@ from os import path
 from typing import Any, Dict, Optional
 
 import ckan.plugins.toolkit as toolkit
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 SERVER_URL_CONF_KEY = 'ckanext.blob_storage.storage_service_url'
 STORAGE_NAMESPACE_CONF_KEY = 'ckanext.blob_storage.storage_namespace'

@@ -9,61 +9,50 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
-
-    services:
-      postgres:
-        image: postgres:11-alpine
-        env:
-          POSTGRES_PASSWORD: ckan
-          POSTGRES_USER: ckan
-          POSTGRES_DB: ckan
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
-      solr:
-        image: ckan/solr
-        env:
-          CKAN_SOLR_PASSWORD: ckan
-        ports:
-          - 8983:8983
-
     strategy:
       matrix:
-        python-version: [ 2.7, 3.7 ]
-        ckan-version: [ 2.8, 2.9 ]
-        exclude:
-          - python-version: 3.7
-            ckan-version: 2.8
+        ckan-version: ["2.9", "2.10"]
+      fail-fast: false
+
+    name: CKAN ${{ matrix.ckan-version }}
+    runs-on: ubuntu-20.04
+
+    container:
+      image: openknowledge/ckan-dev:${{ matrix.ckan-version }}
+    services:
+      solr:
+        image: ckan/ckan-solr:${{ matrix.ckan-version }}
+      postgres:
+        image: ckan/ckan-postgres-dev:${{ matrix.ckan-version }}
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+          image: redis:3
     env:
-      CKAN_PATH: ./ckan
-      VIRTUAL_ENV: "1"  # let's fake a virtual environment, why not
+      CKAN_SQLALCHEMY_URL: postgresql://ckan_default:pass@postgres/ckan_test
+      CKAN_DATASTORE_WRITE_URL: postgresql://datastore_write:pass@postgres/datastore_test
+      CKAN_DATASTORE_READ_URL: postgresql://datastore_read:pass@postgres/datastore_test
+      CKAN_SOLR_URL: http://solr:8983/solr/ckan
+      CKAN_REDIS_URL: redis://redis:6379/1
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Install Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Set up the test environment
-        run: |
-          make ckan-install CKAN_VERSION=${{ matrix.ckan-version }}
-          make create-test-db
-          make dev-setup
-      - name: Run tests
-        run: make test
+    - uses: actions/checkout@v3
+    - name: Install requirements
+      run: |
+        pip install -r dev-requirements.txt
+        pip install -r requirements.txt
+        # Replace default path to CKAN core config file with the one on the container
+        sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
+    - name: Setup ckan.plugins for CKAN 2.9
+      if: ${{ matrix.ckan-version == '2.9' }}
+      run: |
+        ckan config-tool test.ini ckan.plugins=blob_storage
+    - name: Setup extension
+      run: |
+        pip install -e .
+        ckan -c test.ini db init
+    - name: Run tests
+      run: pytest --ckan-ini=test.ini --disable-warnings ckanext/blob_storage/tests
