@@ -12,11 +12,6 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 setup(
     name='''ckanext-blob-storage''',
 
-    # Versions should comply with PEP440.  For a discussion on single-sourcing
-    # the version across setup.py and the project code, see
-    # http://packaging.python.org/en/latest/tutorial.html#version
-    version=ckanext.blob_storage.__version__,
-
     description='''Store CKAN data files using an external Git LFS based storage microservice''',
     long_description=long_description,
     long_description_content_type='text/markdown',
