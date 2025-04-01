@@ -12,8 +12,6 @@ chardet==3.0.4
     # via requests
 git+https://github.com/datopian/ckanext-authz-service.git@v0.1.5#egg=ckanext-authz-service
     # via -r requirements.in
-click==7.1.2
-    # via giftless-client
 cryptography==2.8
     # via pyjwt
 giftless-client==0.1.0
