@@ -5,9 +5,11 @@ from ckan import model, plugins
 from ckan.lib import uploader
 from ckan.plugins import toolkit as tk
 from flask import send_file
+import logging
 
 from .interfaces import IResourceDownloadHandler
 
+log = logging.getLogger(__name__)
 
 def get_context():
     """Get a default context dict
@@ -36,12 +38,18 @@ def call_download_handlers(resource, package, filename=None, inline=False, activ
     """Call all registered plugins download handlers
     """
     for plugin in plugins.PluginImplementations(IResourceDownloadHandler):
+        print(plugin, flush=True)
+        # Print all attributes of the plugins
+        for attr in dir(plugin):
+            print(attr, flush=True)
         if not hasattr(plugin, 'resource_download'):
             continue
 
         if _handler_supports_extra_arg(plugin.resource_download):
+            log.info("Plugin %s supports extra args, calling with extra args", plugin)
             response = plugin.resource_download(resource, package, filename, inline, activity_id)
         else:
+            log.info("Plugin %s does not support extra args, falling back to default download method", plugin)
             response = plugin.resource_download(resource, package, filename)
 
         if response:
@@ -53,6 +61,7 @@ def call_download_handlers(resource, package, filename=None, inline=False, activ
 def download_handler(resource, _, filename=None, inline=False, activity_id=None):
     """Get the download URL from LFS server and redirect the user there
     """
+    log.info("Getting download URL from LFS server for resource %s/%s", resource['package_id'], resource['id'])
     if resource.get('url_type') != 'upload' or not resource.get('lfs_prefix'):
         return None
     context = get_context()
@@ -61,6 +70,7 @@ def download_handler(resource, _, filename=None, inline=False, activity_id=None)
                  'inline': inline,
                  'activity_id': activity_id}
 
+    log.info("Calling get_resource_download_spec action")
     resource_download_spec = tk.get_action('get_resource_download_spec')(context, data_dict)
     href = resource_download_spec.get('href')
 

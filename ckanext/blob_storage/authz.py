@@ -101,7 +101,7 @@ def _get_resource_storage_id(organization_id, dataset_id, resource_id, activity_
     if not resource:
         toolkit.ObjectNotFound("Resource not found.")
 
-    if resource.get('sha256') and resource.get('lfs_prefix'):
-        return '{}/{}'.format(resource['lfs_prefix'], resource['sha256'])
+    if resource.get('hash') and resource.get('lfs_prefix'):
+        return '{}/{}'.format(resource['lfs_prefix'], resource['hash'])
 
     return '{}/{}/{}'.format(organization_id, dataset_id, resource_id)

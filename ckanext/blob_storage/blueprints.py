@@ -2,6 +2,7 @@
 """
 from ckan.plugins import toolkit
 from flask import Blueprint, request
+import logging
 
 from .download_handler import call_download_handlers, call_pre_download_handlers, get_context
 
@@ -10,8 +11,10 @@ blueprint = Blueprint(
     __name__,
 )
 
+log = logging.getLogger(__name__)
 
 def download(id, resource_id, filename=None):
+    log.info("Downloading resource %s/%s", id, resource_id)
     """Download resource blueprint
 
     This calls all registered download handlers in order, until
@@ -34,6 +37,7 @@ def download(id, resource_id, filename=None):
     inline = toolkit.asbool(request.args.get('preview'))
 
     if activity_id and toolkit.check_ckan_version(min_version='2.9'):
+        log.debug("Requesting authorization for activity: %s", activity_id)
         try:
             activity = toolkit.get_action(u'activity_show')(
                 context, {u'id': activity_id, u'include_data': True})
@@ -49,13 +53,14 @@ def download(id, resource_id, filename=None):
             toolkit.abort(404, toolkit._(u'Activity not found'))
 
     try:
+        log.info("Calling pre download handlers for resource %s/%s", id, resource_id)
         resource = call_pre_download_handlers(resource, package, activity_id=activity_id)
+        log.info("Successfully called pre download handlers for resource %s/%s", id, resource_id)
         return call_download_handlers(resource, package, filename, inline, activity_id=activity_id)
     except toolkit.ObjectNotFound:
         return toolkit.abort(404, toolkit._('Resource not found'))
     except toolkit.NotAuthorized:
         return toolkit.abort(401, toolkit._('Not authorized to read resource {0}'.format(resource_id)))
-
 
 blueprint.add_url_rule(u'/dataset/<id>/resource/<resource_id>/download', view_func=download)
 blueprint.add_url_rule(u'/dataset/<id>/resource/<resource_id>/download/<filename>', view_func=download)

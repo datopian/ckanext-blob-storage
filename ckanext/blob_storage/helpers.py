@@ -3,8 +3,11 @@
 from os import path
 from typing import Any, Dict, Optional
 
-import ckan.plugins.toolkit as toolkit
+import ckantoolkit as toolkit
+
 from six.moves.urllib.parse import urlparse
+import logging
+log = logging.getLogger(__name__)
 
 SERVER_URL_CONF_KEY = 'ckanext.blob_storage.storage_service_url'
 STORAGE_NAMESPACE_CONF_KEY = 'ckanext.blob_storage.storage_namespace'
@@ -52,6 +55,7 @@ def server_url():
             SERVER_URL_CONF_KEY))
     if url[-1] == '/':
         url = url[0:-1]
+    log.info("Server URL: %s", url)
     return url
 
 

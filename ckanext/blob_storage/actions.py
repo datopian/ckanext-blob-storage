@@ -22,10 +22,12 @@ def get_resource_download_spec(context, data_dict):
     activity_id = data_dict.get('activity_id')
     inline = toolkit.asbool(data_dict.get('inline'))
 
-    for k in ('lfs_prefix', 'sha256', 'size'):
+    for k in ('lfs_prefix', 'hash', 'size'):
         if k not in resource:
             return {}
 
+    log.info("Getting download spec for resource %s/%s", resource['package_id'], resource['id'])
+    resource['sha256'] = resource['hash']
     return get_lfs_download_spec(context, resource, inline=inline, activity_id=activity_id)
 
 
@@ -63,6 +65,7 @@ def get_lfs_download_spec(context,  # type: Dict[str, Any]
         package['name'],
         resource['id'],
         activity_id=activity_id)
+    log.info("Authz token: %s", authz_token)
     client = context.get('download_lfs_client', LfsClient(helpers.server_url(), authz_token))
 
     resources = [{"oid": sha256, "size": size, "x-filename": filename}]
@@ -114,9 +117,11 @@ def _get_resource_download_lfs_objects(client, lfs_prefix, resources):
     """Get LFS download operation response objects for a given resource list
     """
     log.debug("Requesting download spec from LFS server for %s", resources)
+    log.debug("On prefix %s", lfs_prefix)
     try:
         batch_response = client.batch(lfs_prefix, 'download', resources)
     except LfsError as e:
+        log.debug("Error: %s", e)
         if e.status_code == 404:
             raise toolkit.ObjectNotFound("The requested resource does not exist")
         elif e.status_code == 422:
@@ -159,6 +164,8 @@ def get_download_authz_token(context, org_name, package_name, resource_id, activ
 def _get_resource(context, data_dict):
     """Get resource by ID
     """
+    log.info("Getting resource by ID")
     if 'resource' in data_dict:
+        log.info("Resource in data dict")
         return data_dict['resource']
     return toolkit.get_action('resource_show')(context, {'id': data_dict['id']})

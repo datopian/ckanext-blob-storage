@@ -8,10 +8,14 @@ from . import actions, authz, helpers, validators
 from .blueprints import blueprint
 from .download_handler import download_handler
 from .interfaces import IResourceDownloadHandler
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(plugins.IConfigurer)
+    plugins.implements(plugins.IConfigurable)
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IBlueprint)
     plugins.implements(plugins.IActions)
@@ -19,6 +23,18 @@ class BlobStoragePlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(IResourceDownloadHandler, inherit=True)
     plugins.implements(plugins.IValidators)
     plugins.implements(plugins.IDatasetForm)
+
+    # IConfigurable
+    def configure(self, config):
+        # Certain config options must exists for the plugin to work. Raise an
+        # exception if they're missing.
+        missing_config = "{0} is not configured. Please amend your .ini file."
+        config_options = (
+            'ckanext.blob_storage.storage_service_url',
+        )
+        for option in config_options:
+            if not config.get(option, None):
+                raise RuntimeError(missing_config.format(option))
 
     # IDatasetForm
     def create_package_schema(self):
