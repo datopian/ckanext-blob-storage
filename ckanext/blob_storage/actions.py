@@ -27,7 +27,12 @@ def get_resource_download_spec(context, data_dict):
             return {}
 
     log.info("Getting download spec for resource %s/%s", resource['package_id'], resource['id'])
-    resource['sha256'] = resource['hash']
+    
+    if 'hash' not in resource and 'sha256' in resource:
+        resource['hash'] = resource['sha256']
+    else:
+        resource['sha256'] = resource['hash']
+
     return get_lfs_download_spec(context, resource, inline=inline, activity_id=activity_id)
 
 
