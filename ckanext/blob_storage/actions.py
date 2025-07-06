@@ -33,6 +33,8 @@ def get_resource_download_spec(context, data_dict):
     else:
         resource['sha256'] = resource['hash']
 
+    log.info(f"Resource hashes: hash={resource.get('hash')} sha256={resource.get('sha256')}")
+
     return get_lfs_download_spec(context, resource, inline=inline, activity_id=activity_id)
 
 
