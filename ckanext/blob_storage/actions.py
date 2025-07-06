@@ -28,7 +28,7 @@ def get_resource_download_spec(context, data_dict):
 
     log.info("Getting download spec for resource %s/%s", resource['package_id'], resource['id'])
     
-    if 'hash' not in resource and 'sha256' in resource:
+    if (not resource.get('hash')) and resource.get('sha256'):
         resource['hash'] = resource['sha256']
     else:
         resource['sha256'] = resource['hash']
